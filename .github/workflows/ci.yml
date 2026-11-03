@@ -33,13 +33,11 @@ jobs:
       - uses: bazel-contrib/setup-bazel@8d2cb86a3680a820c3e219597279ce3f80d17a47 # 0.15.0
         with:
           bazelisk-cache: true
-          disk-cache: ${{ runner.os }}-${{ runner.arch }}
-          repository-cache: true
       - name: Test the extension
-        run: bazel --ignore_all_rc_files test //:rules_rs_test //:rules_rs_integration_test --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+        run: bazel --ignore_all_rc_files test //:rules_rs_test //:rules_rs_integration_test --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= --test_output=errors
       - name: Check consumer generation
         working-directory: tests/consumer
-        run: bazel --ignore_all_rc_files run //:gazelle --remote_cache= --remote_executor= --bes_backend= -- -r=true -mode=diff crates
+        run: bazel --ignore_all_rc_files run //:gazelle --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= -- -r=true -mode=diff .
       - name: Build and test the consumer
         working-directory: tests/consumer
-        run: bazel --ignore_all_rc_files test //crates/... //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/probe:probe-bin-bench-test //crates/macros:macros-bench-test //crates/dynamic:dynamic-bench-test --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+        run: bazel --ignore_all_rc_files test //... //:root-probe-bench-test //crates/root-user:root-user-bench-test //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/probe:probe-bin-bench-test //crates/macros:macros-bench-test //crates/dynamic:dynamic-bench-test --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= --test_output=errors

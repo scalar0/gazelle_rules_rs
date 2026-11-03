@@ -67,7 +67,7 @@ func TestCargoContextBindings(t *testing.T) {
 		t.Fatal(err)
 	}
 	output := rendered(rules)
-	for _, want := range []string{"cargo_only = True", "aliases() |", "manual", `name = "b-build-script"`, build.Label} {
+	for _, want := range []string{"cargo_only = True", `label.startswith("@")`, "manual", `name = "b-build-script"`, build.Label} {
 		if !strings.Contains(output, want) {
 			t.Errorf("Missing context declaration %q in:\n%s", want, output)
 		}

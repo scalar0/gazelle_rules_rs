@@ -8,6 +8,7 @@ The [compatibility report](COMPATIBILITY.md) records the adoption requirements a
 Cargo owns targets, dependencies, features, editions, and lint settings.
 The extension does not require a second target list.
 It reads locked Cargo metadata and per-platform Cargo unit graphs.
+Configured consumers use unit graphs even when packages declare no features.
 A pinned nightly Cargo supplies the unstable unit-graph interface.
 The consumer selects the Rust compiler through its registered Bazel toolchain.
 
@@ -105,6 +106,8 @@ Library inputs also include the Cargo README when present.
 Cargo context labels use a content hash without absolute paths.
 Public library labels select compiled contexts through aliases.
 This preserves Rust type identity across local dependency edges.
+The generator removes backend-local aliases before it adds Cargo context aliases.
+This also avoids invalid backend labels for dependencies on the workspace-root package.
 Required-feature conditions follow the selected Cargo unit graphs.
 External dependency resolution remains the responsibility of rules_rs.
 

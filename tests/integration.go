@@ -400,7 +400,7 @@ func TestWorkspaceLayouts(t *testing.T) {
 			put("MODULE.bazel", "module(name = \"layout\")\n")
 			put(workspace+"Cargo.toml", "[package]\nname='layout'\nversion='0.1.0'\nedition='2024'\n[workspace]\nmembers=['deep/member']\n")
 			put(workspace+"src/lib.rs", "pub fn value() -> u32 { 42 }\n")
-			put(workspace+"deep/member/Cargo.toml", "[package]\nname='member'\nversion='0.1.0'\nedition='2024'\n")
+			put(workspace+"deep/member/Cargo.toml", "[package]\nname='member'\nversion='0.1.0'\nedition='2024'\n[dependencies]\nlayout={path='../..'}\n")
 			put(workspace+"deep/member/src/lib.rs", "pub fn value() -> u32 { 42 }\n")
 			put("backend.json", `{"manifest":"`+workspace+`Cargo.toml","platform_triples":["x86_64-unknown-linux-gnu"]}`)
 			run := func(want int, tool string, args ...string) {
@@ -434,6 +434,9 @@ func TestWorkspaceLayouts(t *testing.T) {
 			name := "rust"
 			if layout == "root" {
 				name = "layout"
+			}
+			if !bytes.Contains(before, []byte("cargo_only = True")) {
+				t.Fatal("Configured workspaces need Cargo contexts without declared features.")
 			}
 			if !bytes.Contains(before, []byte(`name = "`+name+`"`)) {
 				t.Fatalf("Missing root target:\n%s", before)

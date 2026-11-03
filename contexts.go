@@ -105,7 +105,7 @@ func readContexts(ctx context.Context, root, tool string, packages map[string]ca
 }
 
 func readConfiguredContexts(ctx context.Context, root, tool string, packages map[string]cargoPackage, members []string, platforms []string) error {
-	needed := false
+	needed := len(platforms) != 0
 	for _, pkg := range packages {
 		needed = needed || len(pkg.DeclaredFeatures) != 0
 	}

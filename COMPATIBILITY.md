@@ -43,7 +43,7 @@ The pinned API source defines the exact interfaces used by this release candidat
 | Independent reuse | A separate Bzlmod consumer compiles the public language library |
 | Deterministic output | Repeated generation and diff checks |
 | Negative tests | Invalid schemas, conflicts, stale rules, and unchanged files after errors |
-| Workspace layout | Root packages and nested workspaces without scope flags |
+| Workspace layout | Root packages, dependencies on root packages, and nested workspaces without scope flags |
 
 ## Supported behavior and limits
 

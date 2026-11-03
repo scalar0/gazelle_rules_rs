@@ -9,5 +9,5 @@ test:
 # Check generation and build Rust targets through an external module dependency.
 [working-directory("tests/consumer")]
 consumer-test:
-    ASPECT_WRAPPER_SKIP=1 BAZELISK_SKIP_WRAPPER=1 bazel --ignore_all_rc_files run //:gazelle --remote_cache= --remote_executor= --bes_backend= -- -r=true -mode=diff crates
-    ASPECT_WRAPPER_SKIP=1 BAZELISK_SKIP_WRAPPER=1 bazel --ignore_all_rc_files test //crates/... //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/probe:probe-bin-bench-test //crates/macros:macros-bench-test //crates/dynamic:dynamic-bench-test --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+    ASPECT_WRAPPER_SKIP=1 BAZELISK_SKIP_WRAPPER=1 bazel --ignore_all_rc_files run //:gazelle --remote_cache= --remote_executor= --bes_backend= -- -r=true -mode=diff .
+    ASPECT_WRAPPER_SKIP=1 BAZELISK_SKIP_WRAPPER=1 bazel --ignore_all_rc_files test //... //:root-probe-bench-test //crates/root-user:root-user-bench-test //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/probe:probe-bin-bench-test //crates/macros:macros-bench-test //crates/dynamic:dynamic-bench-test --remote_cache= --remote_executor= --bes_backend= --test_output=errors

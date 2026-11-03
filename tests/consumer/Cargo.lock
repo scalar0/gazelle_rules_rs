@@ -23,3 +23,17 @@ dependencies = [
 [[package]]
 name = "probe-macros"
 version = "0.1.0"
+
+[[package]]
+name = "root-probe"
+version = "0.1.0"
+dependencies = [
+ "probe",
+]
+
+[[package]]
+name = "root-user"
+version = "0.1.0"
+dependencies = [
+ "root-probe",
+]

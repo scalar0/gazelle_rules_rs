@@ -128,6 +128,17 @@ func rustAttrs(r *rule.Rule, pkg cargoPackage, target cargoTarget) {
 // Alias keys are dependency edges in Bazel, including aliases absent from deps.
 // Filter local aliases by Cargo dependency kind before Bazel analyzes them.
 func targetAliases(pkg cargoPackage, kinds ...string) bzl.Expr {
+	if pkg.Contexts != nil {
+		// Cargo contexts supply every local alias, including workspace-root dependencies.
+		return &bzl.Comprehension{
+			Curly: true,
+			Body:  &bzl.KeyValueExpr{Key: &bzl.Ident{Name: "label"}, Value: &bzl.Ident{Name: "name"}},
+			Clauses: []bzl.Expr{
+				&bzl.ForClause{Vars: &bzl.TupleExpr{NoBrackets: true, List: []bzl.Expr{&bzl.Ident{Name: "label"}, &bzl.Ident{Name: "name"}}}, X: &bzl.CallExpr{X: &bzl.DotExpr{X: call("aliases"), Name: "items"}}},
+				&bzl.IfClause{Cond: &bzl.CallExpr{X: &bzl.DotExpr{X: &bzl.Ident{Name: "label"}, Name: "startswith"}, List: []bzl.Expr{rule.ExprFromValue("@")}}},
+			},
+		}
+	}
 	local, allowed := map[string]bool{}, map[string]bool{}
 	for _, dependency := range pkg.Dependencies {
 		if dependency.Path == "" {

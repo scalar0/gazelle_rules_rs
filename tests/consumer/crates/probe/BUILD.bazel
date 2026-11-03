@@ -14,7 +14,7 @@ rust_test(
         ["src/**/*.rs"],
         exclude = ["src/main.rs"],
     ),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
     },
     compile_data = [] + [":manifest_resources"],
@@ -54,7 +54,7 @@ rust_shared_library(
         ["src/**/*.rs"],
         exclude = ["src/main.rs"],
     ),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
     },
     compile_data = [] + [":manifest_resources"],
@@ -87,7 +87,7 @@ rust_static_library(
         ["src/**/*.rs"],
         exclude = ["src/main.rs"],
     ),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
     },
     compile_data = [] + [":manifest_resources"],
@@ -132,7 +132,7 @@ rust_doc_test(
 rust_test(
     name = "probe-integration-tests/check",
     srcs = glob(["tests/**/*.rs"]),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -168,7 +168,7 @@ rust_test(
 rust_test(
     name = "probe-benches/smoke",
     srcs = glob(["benches/**/*.rs"]),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -220,7 +220,7 @@ rust_binary(
     name = "probe-examples/demo",
     testonly = True,
     srcs = glob(["examples/**/*.rs"]),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -254,7 +254,7 @@ rust_static_library(
     name = "probe-examples/ffi",
     testonly = True,
     srcs = glob(["examples/**/*.rs"]),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -290,7 +290,7 @@ rust_test(
         ["src/**/*.rs"],
         exclude = ["src/main.rs"],
     ),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
     },
     args = ["--bench"],
@@ -324,7 +324,7 @@ rust_library(
     name = "probe-examples/ffi-rlib",
     testonly = True,
     srcs = glob(["examples/**/*.rs"]),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -361,7 +361,7 @@ rust_binary(
         allow_empty = True,
         exclude = ["src/main.rs"],
     ) + ["src/main.rs"],
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -397,7 +397,7 @@ rust_test(
         allow_empty = True,
         exclude = ["src/main.rs"],
     ) + ["src/main.rs"],
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -434,7 +434,7 @@ rust_test(
         allow_empty = True,
         exclude = ["src/main.rs"],
     ) + ["src/main.rs"],
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -479,7 +479,7 @@ rust_binary(
         allow_empty = True,
         exclude = ["src/main.rs"],
     ) + ["src/main.rs"],
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -512,7 +512,7 @@ rust_binary(
 cargo_build_script(
     name = "probe-build-script-cargo-872b5fc9433c2a32",
     srcs = glob(["**/*.rs"]),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]},
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")},
     build_script_env = {
     },
     compile_data = [],
@@ -540,7 +540,7 @@ rust_library(
         ["src/**/*.rs"],
         exclude = ["src/main.rs"],
     ),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
     },
     compile_data = [] + [":manifest_resources"],
@@ -572,7 +572,7 @@ rust_binary(
     name = "probe-examples/demo-cargo-8c01b397db72e59e",
     testonly = True,
     srcs = glob(["examples/**/*.rs"]),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
@@ -607,7 +607,7 @@ rust_static_library(
     name = "probe-examples/ffi-cargo-9c0e6c754b388a51",
     testonly = True,
     srcs = glob(["examples/**/*.rs"]),
-    aliases = {label: name for label, name in aliases().items() if label not in ["//crates/macros"]} | {
+    aliases = {label: name for label, name in aliases().items() if label.startswith("@")} | {
         "//crates/macros:macros-cargo-2e02001fccf0ef38": "probe_macros",
         "//crates/probe:probe-cargo-64ce6b18fed47fe5": "probe",
     },
