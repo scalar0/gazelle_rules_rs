@@ -54,9 +54,13 @@ filegroup(
         ":linux_amd64": ["@gazelle_cargo_linux_amd64//:cargo/bin/cargo"],
         ":linux_arm64": ["@gazelle_cargo_linux_arm64//:cargo/bin/cargo"],
     }),
+    visibility = ["//visibility:public"],
 )
 
-rustc_runfiles(name = "rustc")
+rustc_runfiles(
+    name = "rustc",
+    visibility = ["//visibility:public"],
+)
 
 filegroup(
     name = "rustc_sysroot",
@@ -115,6 +119,7 @@ go_binary(
         ":cargo",
         ":rustc",
     ],
+    visibility = ["//visibility:public"],
     deps = [":rules_rs"],
 )
 

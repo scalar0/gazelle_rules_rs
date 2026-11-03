@@ -133,7 +133,7 @@ cargo_path = "vendor/model.json"
 Input lists accept labels, package-relative paths, and glob patterns.
 Build inputs pair a repository-relative Cargo path with a Bazel file label.
 Generated build scripts receive those labels as data and environment values through `execpath`.
-The separate `//:vendor-config` command maintains matching Cargo environment defaults.
+The public `@gazelle_rules_rs//:vendor-config` command maintains matching Cargo environment defaults.
 It preserves configuration outside its marked block.
 Build scripts own resource parsing and validation.
 
@@ -158,6 +158,13 @@ Duplicate namespaces, duplicate kinds, unknown input targets, conflicting enviro
 
 Remove a handler's metadata and regenerate before you remove its compiled registration.
 This lets Gazelle remove the handler's stale rules with the registered merge policy.
+
+## Consumer tools
+
+The public `@gazelle_rules_rs//:cargo` target supplies the pinned generation Cargo binary.
+The public `@gazelle_rules_rs//:rustc` target supplies a runfiles path manifest for the consumer's registered Rust compiler.
+Consumers can use these targets as declared test inputs.
+The public `@gazelle_rules_rs//:metadata.schema.json` target supplies the Cargo metadata schema.
 
 ## Development and provenance
 
