@@ -251,6 +251,10 @@ func collectContexts(graph unitGraph, platform, command string, packages map[str
 			if dependency == nil {
 				continue
 			}
+			// The doctest crate already carries its build-script provider.
+			if unit.Mode == "doctest" && dependency.Kind == "custom-build" {
+				continue
+			}
 			if dependency.Kind == "bin" {
 				result.Binaries[child.Target.Name] = dependency.Label
 				continue

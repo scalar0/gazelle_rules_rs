@@ -309,3 +309,17 @@ func TestReconcileLeavesParsedRulesUnchanged(t *testing.T) {
 		t.Fatal("Generation changed parsed rules.")
 	}
 }
+
+func TestScopeThroughSymlink(t *testing.T) {
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, "real/crates/probe"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	alias := filepath.Join(root, "alias")
+	if err := os.Symlink(filepath.Join(root, "real"), alias); err != nil {
+		t.Fatal(err)
+	}
+	if err := checkScope(alias, alias, "crates", []string{"crates/probe"}); err != nil {
+		t.Fatal(err)
+	}
+}

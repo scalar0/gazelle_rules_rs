@@ -91,6 +91,11 @@ func checkScope(root, workDir, scope string, dirs []string) error {
 	if len(dirs) == 0 {
 		return fmt.Errorf("pass %s or an immediate crate directory", scope)
 	}
+	canonicalRoot, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		return err
+	}
+	root = canonicalRoot
 	for _, dir := range dirs {
 		abs := dir
 		if !filepath.IsAbs(abs) {
@@ -298,8 +303,11 @@ func (e *extension) OnStart(ctx context.Context) error {
 				expr := r.Attr(key)
 				bzl.Walk(expr, func(node bzl.Expr, _ []bzl.Expr) {
 					if value, ok := node.(*bzl.StringExpr); ok {
-						value.Value = strings.ReplaceAll(value.Value, "@rules_rs//", "@"+e.rulesRepository()+"//")
-						value.Value = strings.ReplaceAll(value.Value, "@crates//", "@"+e.cratesRepository()+"//")
+						if strings.HasPrefix(value.Value, "@rules_rs//") {
+							value.Value = "@" + e.rulesRepository() + "//" + strings.TrimPrefix(value.Value, "@rules_rs//")
+						} else if strings.HasPrefix(value.Value, "@crates//") {
+							value.Value = "@" + e.cratesRepository() + "//" + strings.TrimPrefix(value.Value, "@crates//")
+						}
 					}
 				})
 				setAttr(r, key, expr)

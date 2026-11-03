@@ -98,6 +98,7 @@ func TestCargoGeneration(t *testing.T) {
 	}
 	scope := "crates"
 	gazelle := func(want int, mode string) string {
+		t.Helper()
 		args := []string{"-repo_root=" + root, "-index=false", "-r=true", "-rules_rs_crate_scope=" + scope, "-mode=" + mode}
 		return run(want, runner, append(args, strings.Split(scope, ",")...)...)
 	}
@@ -230,8 +231,10 @@ func TestCargoGeneration(t *testing.T) {
 	}
 	write(probeManifest, manifestBefore)
 	gazelle(0, "fix")
-	write(probeManifest, manifestBefore+"\n"+`[target.'cfg(target_os = "linux")'.build-dependencies]
-renamed = {package = "normal-support", path = "../normal", features = ["host-only"]}
+	write(probeManifest, manifestBefore+"\n"+`[build-dependencies.renamed]
+package = "normal-support"
+path = "../normal"
+features = ["host-only"]
 `)
 	beforeContexts := builds()
 	gazelle(1, "diff")

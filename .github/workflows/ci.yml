@@ -42,4 +42,4 @@ jobs:
         run: bazel --ignore_all_rc_files run //:gazelle --remote_cache= --remote_executor= --bes_backend= -- -r=true -mode=diff crates
       - name: Build and test the consumer
         working-directory: tests/consumer
-        run: bazel --ignore_all_rc_files test //crates/... //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/dynamic:dynamic-bench-test --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+        run: bazel --ignore_all_rc_files test //crates/... //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/probe:probe-bin-bench-test //crates/macros:macros-bench-test //crates/dynamic:dynamic-bench-test --remote_cache= --remote_executor= --bes_backend= --test_output=errors

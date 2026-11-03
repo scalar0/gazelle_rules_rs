@@ -1,0 +1,7 @@
+"""Keep the independent consumer outside this module's target searches."""
+
+ignore_directories([
+    "tests/consumer",
+    "**/bazel-*",
+    "**/target",
+])

@@ -17,4 +17,9 @@ name = "probe"
 version = "0.1.0"
 dependencies = [
  "itoa",
+ "probe-macros",
 ]
+
+[[package]]
+name = "probe-macros"
+version = "0.1.0"
