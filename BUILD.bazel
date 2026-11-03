@@ -4,6 +4,8 @@ load(":rustc.bzl", "rustc_runfiles", "tool_paths")
 
 exports_files([
     "cargo.MODULE.bazel",
+    "config.bzl",
+    "configuration.schema.json",
 ])
 
 exports_files(
@@ -70,9 +72,11 @@ tool_paths(
 go_library(
     name = "rules_rs",
     srcs = [
+        "configuration.go",
         "contexts.go",
         "gazelle.go",
         "generate.go",
+        "handlers.go",
         "lints.go",
         "metadata.go",
         "options.go",
@@ -84,7 +88,10 @@ go_library(
         ":cargo",
         ":rustc",
     ],
-    embedsrcs = ["metadata.schema.json"],
+    embedsrcs = [
+        "metadata.schema.json",
+        "configuration.schema.json",
+    ],
     importpath = "github.com/scalar0/gazelle_rules_rs",
     visibility = ["//visibility:public"],
     deps = [
@@ -126,6 +133,7 @@ go_test(
     srcs = [
         "tests/contexts.go",
         "tests/generate.go",
+        "tests/handlers.go",
         "tests/options.go",
         "tests/platforms.go",
         "tests/reconcile.go",

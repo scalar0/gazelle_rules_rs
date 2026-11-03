@@ -1,0 +1,45 @@
+name: Compatibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compatibility-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ASPECT_WRAPPER_SKIP: '1'
+  BAZELISK_SKIP_WRAPPER: '1'
+
+jobs:
+  test:
+    name: ${{ matrix.host }}
+    runs-on: ${{ matrix.host }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        host: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, macos-15-intel]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: bazel-contrib/setup-bazel@8d2cb86a3680a820c3e219597279ce3f80d17a47 # 0.15.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ runner.os }}-${{ runner.arch }}
+          repository-cache: true
+      - name: Test the extension
+        run: bazel --ignore_all_rc_files test //:rules_rs_test //:rules_rs_integration_test --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+      - name: Check consumer generation
+        working-directory: tests/consumer
+        run: bazel --ignore_all_rc_files run //:gazelle --remote_cache= --remote_executor= --bes_backend= -- -r=true -mode=diff crates
+      - name: Build and test the consumer
+        working-directory: tests/consumer
+        run: bazel --ignore_all_rc_files test //crates/... //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/dynamic:dynamic-bench-test --remote_cache= --remote_executor= --bes_backend= --test_output=errors

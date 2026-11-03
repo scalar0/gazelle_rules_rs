@@ -54,7 +54,10 @@ type packageContexts struct {
 
 func unitName(pkg cargoPackage, unit cargoUnit) (string, error) {
 	base := filepath.Base(filepath.Dir(pkg.Manifest))
-	if len(unit.Target.Kind) != 1 {
+	if pkg.RepoRoot == filepath.Dir(pkg.Manifest) {
+		base = pkg.Name
+	}
+	if targetKind(unit.Target) == "" {
 		return "", fmt.Errorf("Cargo unit %s must have one target kind", unit.Target.Name)
 	}
 	source, err := filepath.Rel(filepath.Dir(pkg.Manifest), unit.Target.Source)
@@ -63,7 +66,7 @@ func unitName(pkg cargoPackage, unit cargoUnit) (string, error) {
 	}
 	source = filepath.ToSlash(source)
 	name := base
-	switch unit.Target.Kind[0] {
+	switch targetKind(unit.Target) {
 	case "lib", "proc-macro":
 	case "bin":
 		name += "-bin"
@@ -72,10 +75,20 @@ func unitName(pkg cargoPackage, unit cargoUnit) (string, error) {
 		}
 	case "test":
 		return integrationName(base, unit.Target), nil
+	case "bench":
+		return base + "-benches/" + unit.Target.Name, nil
+	case "example":
+		name = base + "-examples/" + unit.Target.Name
 	case "custom-build":
 		return base + "-build-script", nil
 	default:
-		return "", fmt.Errorf("Cargo unit kind %s is not supported", unit.Target.Kind[0])
+		return "", fmt.Errorf("Cargo unit kind %s is not supported", targetKind(unit.Target))
+	}
+	if unit.Mode == "doctest" {
+		return name + "-doc-tests", nil
+	}
+	if unit.Mode == "bench" {
+		return name + "-bench-test", nil
 	}
 	if unit.Mode == "test" {
 		name += "-unit-tests"
@@ -84,6 +97,14 @@ func unitName(pkg cargoPackage, unit cargoUnit) (string, error) {
 }
 
 func readContexts(ctx context.Context, root, tool string, packages map[string]cargoPackage, members []string) error {
+	platforms, err := readPlatforms(root)
+	if err != nil {
+		return err
+	}
+	return readConfiguredContexts(ctx, root, tool, packages, members, platforms)
+}
+
+func readConfiguredContexts(ctx context.Context, root, tool string, packages map[string]cargoPackage, members []string, platforms []string) error {
 	needed := false
 	for _, pkg := range packages {
 		needed = needed || len(pkg.DeclaredFeatures) != 0
@@ -91,19 +112,35 @@ func readContexts(ctx context.Context, root, tool string, packages map[string]ca
 	if !needed {
 		return nil
 	}
-	platforms, err := readPlatforms(root)
-	if err != nil {
-		return err
+	if len(platforms) == 0 {
+		return fmt.Errorf("configure platform_triples for Cargo contexts")
 	}
 	for rel, pkg := range packages {
 		pkg.Contexts = &packageContexts{Platforms: platforms, Bindings: map[string]map[string]*contextTarget{}, Variants: map[string]*contextTarget{}}
 		packages[rel] = pkg
 	}
 	for _, platform := range platforms {
-		for _, command := range []string{"build", "test"} {
+		commands := []string{"build", "examples", "test", "bench"}
+		for _, pkg := range packages {
+			for _, target := range pkg.Targets {
+				if target.Doctest {
+					commands = append(commands, "doc")
+					break
+				}
+			}
+			if slices.Contains(commands, "doc") {
+				break
+			}
+		}
+		for _, command := range commands {
 			args := []string{command, "--workspace", "--unit-graph", "-Z", "unstable-options", "--target=" + platform}
-			if command == "test" {
-				args = append(args, "--all-targets")
+			if command == "examples" {
+				args[0] = "build"
+				args = append(args, "--examples")
+			}
+			if command == "doc" {
+				args[0] = "test"
+				args = append(args, "--doc")
 			}
 			output, err := cargoToolOutput(ctx, root, tool, args...)
 			if err != nil {
@@ -155,6 +192,13 @@ func collectContexts(graph unitGraph, platform, command string, packages map[str
 			return fmt.Errorf("Cargo unit graph has an invalid root index %d", index)
 		}
 	}
+	if command == "bench" {
+		for i := range graph.Units {
+			if graph.Units[i].Mode == "test" {
+				graph.Units[i].Mode = "bench"
+			}
+		}
+	}
 	resolved := map[int]*contextTarget{}
 	visiting := map[int]bool{}
 	var visit func(int) (*contextTarget, error)
@@ -182,7 +226,7 @@ func collectContexts(graph unitGraph, platform, command string, packages map[str
 		}
 		source, _ := filepath.Rel(filepath.Dir(pkg.Manifest), unit.Target.Source)
 		result := &contextTarget{
-			Template: name, Source: filepath.ToSlash(source), Kind: unit.Target.Kind[0],
+			Template: name, Source: filepath.ToSlash(source), Kind: targetKind(unit.Target),
 			Features: slices.Clone(unit.Features), Aliases: map[string]string{}, Binaries: map[string]string{},
 		}
 		slices.Sort(result.Features)
@@ -226,7 +270,7 @@ func collectContexts(graph unitGraph, platform, command string, packages map[str
 		variant := fmt.Sprintf("%s-cargo-%x", name, digest[:8])
 		result.Label = "//" + rel + ":" + variant
 		resolved[index] = result
-		if unit.Mode != "test" {
+		if unit.Mode != "test" && unit.Mode != "doctest" && unit.Mode != "bench" {
 			pkg.Contexts.Variants[variant] = result
 		}
 		pkg = packages[rel]
@@ -245,8 +289,14 @@ func collectContexts(graph unitGraph, platform, command string, packages map[str
 		if err != nil {
 			return err
 		}
-		canonical := command == "test" && unit.Mode == "test"
-		if command == "build" {
+		canonical := command == "test" && (unit.Mode == "test" || ((result.Kind == "example" || result.Kind == "bench") && unit.Platform != nil))
+		if command == "doc" {
+			canonical = unit.Mode == "doctest"
+		}
+		if command == "bench" {
+			canonical = unit.Mode == "bench"
+		}
+		if command == "build" || command == "examples" {
 			canonical = unit.Platform != nil || (result.Kind == "proc-macro" && slices.Contains(graph.Roots, index))
 		}
 		if canonical {
@@ -262,6 +312,9 @@ func collectContexts(graph unitGraph, platform, command string, packages map[str
 
 func cloneContextRule(template *rule.Rule, name string) *rule.Rule {
 	r := newRule(template.Kind(), name)
+	for _, key := range []string{"cargo_template", "cargo_input_target", "cargo_dev"} {
+		r.SetPrivateAttr(key, template.PrivateAttr(key))
+	}
 	for _, attr := range template.AttrKeys() {
 		if attr != "name" {
 			setAttr(r, attr, template.Attr(attr))
@@ -281,7 +334,7 @@ func contextDeps(kind string, local bzl.Expr) bzl.Expr {
 	flags := []string{"normal", "cargo_only"}
 	if kind == "cargo_build_script" {
 		flags = []string{"build", "cargo_only"}
-	} else if kind == "rust_test" {
+	} else if kind == "rust_test" || kind == "rust_doc_test" || kind == "example" {
 		flags = []string{"normal", "normal_dev", "cargo_only"}
 	}
 	return &bzl.BinaryExpr{X: call("all_crate_deps", flags...), Op: "+", Y: local}
@@ -330,12 +383,16 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 			}
 			continue
 		}
-		bindings := pkg.Contexts.Bindings[template.Name()]
+		bindingName := template.Name()
+		if name, ok := template.PrivateAttr("cargo_template").(string); ok {
+			bindingName = name
+		}
+		bindings := pkg.Contexts.Bindings[bindingName]
 		if len(bindings) == 0 {
 			continue
 		}
 		r := cloneContextRule(template, template.Name())
-		if crate := r.AttrString("crate"); crate != "" {
+		if crate := r.AttrString("crate"); crate != "" && r.Kind() != "rust_doc_test" {
 			base := byName[strings.TrimPrefix(crate, ":")]
 			if base == nil {
 				return nil, fmt.Errorf("context test %s has no source target", r.Name())
@@ -350,6 +407,7 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 		}
 		features, deps, compatible := map[string][]string{}, map[string][]string{}, map[string][]string{}
 		aliases, actual := map[string]bzl.Expr{}, map[string]bzl.Expr{}
+		docCrates := map[string]bzl.Expr{}
 		environments, runtimeData := map[string]bzl.Expr{}, map[string]bzl.Expr{}
 		hasBinaries := false
 		for _, platform := range pkg.Contexts.Platforms {
@@ -365,16 +423,33 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 			features[platform], deps[platform], compatible[platform] = context.Features, context.Deps, nil
 			aliases[condition] = contextAliases(pkg, context.Aliases)
 			actual[condition] = rule.ExprFromValue(context.Label)
+			if r.Kind() == "rust_doc_test" {
+				for _, dep := range context.Deps {
+					variant := strings.TrimPrefix(dep, "//"+rel+":")
+					if local := pkg.Contexts.Variants[variant]; local != nil && local.Kind == "lib" {
+						docCrates[condition] = rule.ExprFromValue(dep)
+					}
+				}
+			}
 			environments[condition], runtimeData[condition] = runtimeInputs(pkg, context.Binaries)
 			hasBinaries = hasBinaries || len(context.Binaries) != 0
 		}
-		if r.Kind() == "cargo_build_script" || r.Kind() == "rust_proc_macro" || r.Kind() == "rust_library" {
+		if r.Kind() == "cargo_build_script" || r.Kind() == "rust_proc_macro" || (r.Kind() == "rust_library" && template.PrivateAttr("cargo_template") == nil) {
 			r = newRule("alias", r.Name())
 			setAttr(r, "actual", expressionSelect(actual))
 		} else {
 			setAttr(r, "crate_features", platformValues(features))
-			setAttr(r, "deps", contextDeps(r.Kind(), platformValues(deps)))
-			setAttr(r, "aliases", expressionSelect(aliases))
+			depKind := r.Kind()
+			if template.PrivateAttr("cargo_dev") == true {
+				depKind = "example"
+			}
+			setAttr(r, "deps", contextDeps(depKind, platformValues(deps)))
+			if r.Kind() != "rust_doc_test" {
+				setAttr(r, "aliases", expressionSelect(aliases))
+			}
+		}
+		if len(docCrates) != 0 {
+			setAttr(r, "crate", expressionSelect(docCrates))
 		}
 		if hasBinaries {
 			setAttr(r, "rustc_env", expressionSelect(environments))
@@ -398,7 +473,11 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 		}
 		r := cloneContextRule(template, name)
 		setAttr(r, "crate_features", rule.ExprFromValue(context.Features))
-		setAttr(r, "deps", contextDeps(r.Kind(), rule.ExprFromValue(context.Deps)))
+		depKind := r.Kind()
+		if template.PrivateAttr("cargo_dev") == true {
+			depKind = "example"
+		}
+		setAttr(r, "deps", contextDeps(depKind, rule.ExprFromValue(context.Deps)))
 		setAttr(r, "aliases", contextAliases(pkg, context.Aliases))
 		setAttr(r, "tags", append(r.AttrStrings("tags"), "manual"))
 		result = append(result, r)

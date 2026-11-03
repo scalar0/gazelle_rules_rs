@@ -118,7 +118,7 @@ func resolveSettings(defaults map[string]json.RawMessage, pkg cargoPackage) (set
 		return settings{}, err
 	}
 	for name, input := range result.BuildInputs {
-		rel, err := filepath.Rel(pkg.WorkspaceRoot, filepath.Dir(pkg.Manifest))
+		rel, err := filepath.Rel(packageRepoRoot(pkg), filepath.Dir(pkg.Manifest))
 		if err != nil {
 			return settings{}, err
 		}

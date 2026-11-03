@@ -2,3 +2,24 @@
 name = "probe"
 version = "0.1.0"
 edition = "2024"
+
+[lib]
+crate-type = ["rlib", "cdylib", "staticlib"]
+
+[features]
+default = ["checked"]
+checked = []
+
+[[bench]]
+name = "smoke"
+harness = false
+
+[[example]]
+name = "ffi"
+crate-type = ["staticlib", "rlib"]
+
+[package.metadata.resources]
+files = ["resources/message.txt"]
+
+[dependencies]
+itoa = "=1.0.18"

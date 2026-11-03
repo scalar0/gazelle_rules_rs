@@ -52,7 +52,7 @@ func TestConventionalCrate(t *testing.T) {
 		"crate_name = crate_name()", "edition = edition()", "lint_config = lint_config()", "aliases = aliases()",
 		"all_crate_deps(normal = True) + [\":probe-build-script\"]",
 		"normal_dev = True", "all_crate_deps(build = True)",
-		"probe-integration-tests/roundtrip", `srcs = ["tests/roundtrip.rs"]`, "src/**/*.rs",
+		"probe-integration-tests/roundtrip", `srcs = glob(["tests/**/*.rs"])`, "src/**/*.rs",
 		"--forbid=unsafe_code", "--warn=clippy::all", "--deny=clippy::unwrap_used", "syntax",
 	} {
 		if !strings.Contains(output, want) {
@@ -114,10 +114,13 @@ func TestIntegrationTargetIdentity(t *testing.T) {
 		if err != nil || name != r.Name() || name != "probe-integration-tests/"+target.Name {
 			t.Fatalf("Test and context names differ: %s, %s, %v", name, r.Name(), err)
 		}
-		srcs := r.AttrStrings("srcs")
-		if len(srcs) != 1 || srcs[0] != "tests/"+filepath.Base(target.Source) {
-			t.Fatalf("The test must declare only its Cargo root: %v", srcs)
+		if _, ok := rule.ParseGlobExpr(r.Attr("srcs")); !ok {
+			t.Fatal("The test must include shared source modules.")
 		}
+		if r.AttrString("crate_root") != "tests/"+filepath.Base(target.Source) {
+			t.Fatal("The test root changed.")
+		}
+
 		if r.AttrString("crate_name") != strings.ReplaceAll(target.Name, "-", "_") {
 			t.Fatal("The Rust crate name must follow the Cargo target name.")
 		}

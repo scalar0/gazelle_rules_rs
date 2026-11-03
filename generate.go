@@ -58,6 +58,9 @@ func newRule(kind, name string) *rule.Rule {
 }
 
 func librarySources(root string) bzl.Expr {
+	if !strings.HasPrefix(root, "src/") {
+		return targetSources(root)
+	}
 	covered := strings.HasPrefix(root, "src/") && strings.HasSuffix(root, ".rs") && root != "src/main.rs"
 	glob := rule.ExprFromValue(rule.GlobValue{
 		Patterns:   []string{"src/**/*.rs"},
@@ -130,7 +133,7 @@ func targetAliases(pkg cargoPackage, kinds ...string) bzl.Expr {
 		if dependency.Path == "" {
 			continue
 		}
-		rel, err := filepath.Rel(pkg.WorkspaceRoot, dependency.Path)
+		rel, err := filepath.Rel(packageRepoRoot(pkg), dependency.Path)
 		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 			continue
 		}
@@ -167,6 +170,7 @@ func integrationName(base string, target cargoTarget) string {
 
 func unitTest(pkg cargoPackage, target cargoTarget, crate string, compileData bzl.Expr) *rule.Rule {
 	unit := newRule("rust_test", crate+"-unit-tests")
+	unit.SetPrivateAttr("cargo_input_target", crate)
 	rustAttrs(unit, pkg, target)
 	setAttr(unit, "crate", ":"+crate)
 	setAttr(unit, "compile_data", compileData)
@@ -213,9 +217,15 @@ func inputs(patterns []string) bzl.Expr {
 }
 
 func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, error) {
-	pkg.WorkspaceRoot = root
+	if pkg.WorkspaceRoot == "" {
+		pkg.WorkspaceRoot = root
+	}
+	pkg.RepoRoot = root
 	dir := filepath.Join(root, rel)
 	base := path.Base(rel)
+	if rel == "" || rel == "." {
+		base = pkg.Name
+	}
 	var rules []*rule.Rule
 	readme, err := readmeInput(root, rel, pkg)
 	if err != nil {
@@ -240,10 +250,10 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 		return filepath.ToSlash(value), nil
 	}
 	for _, target := range pkg.Targets {
-		if len(target.Kind) != 1 {
-			return nil, fmt.Errorf("Cargo target %q must have one supported kind: %v", target.Name, target.Kind)
+		if targetKind(target) == "" {
+			return nil, fmt.Errorf("Cargo target %q has unsupported kinds %v", target.Name, target.Kind)
 		}
-		switch target.Kind[0] {
+		switch targetKind(target) {
 		case "lib", "proc-macro":
 			hasLib = true
 		case "custom-build":
@@ -270,7 +280,7 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 		if err != nil {
 			return nil, err
 		}
-		kind := target.Kind[0]
+		kind := targetKind(target)
 		switch kind {
 		case "lib", "proc-macro":
 			ruleKind := "rust_library"
@@ -292,9 +302,33 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 			if target.Test {
 				rules = append(rules, unitTest(pkg, target, base, inputs(unitData)))
 			}
+			if target.Bench {
+				rules = append(rules, benchmark(pkg, target, base, inputs(unitData)))
+			}
+			for _, typ := range target.CrateTypes {
+				if typ == "lib" || typ == "rlib" || typ == "proc-macro" {
+					continue
+				}
+				kind := crateRuleKind(typ)
+				if kind == "" {
+					return nil, fmt.Errorf("unsupported library crate type %s", typ)
+				}
+				output := cloneContextRule(r, base+"-"+typ)
+				output.SetKind(kind)
+				output.SetPrivateAttr("cargo_template", base)
+				output.SetPrivateAttr("cargo_input_target", base)
+				rules = append(rules, output)
+			}
+			if target.Doctest && kind == "lib" {
+				doc := newRule("rust_doc_test", base+"-doc-tests")
+				setAttr(doc, "crate", ":"+base)
+				setAttr(doc, "deps", deps([]string{"normal", "normal_dev"}))
+				rules = append(rules, doc)
+			}
+
 		case "custom-build":
 			r := newRule("cargo_build_script", base+"-build-script")
-			setAttr(r, "srcs", []string{file})
+			setAttr(r, "srcs", targetSources(file))
 			setAttr(r, "crate_root", file)
 			setEdition(r, pkg, target)
 			setAttr(r, "aliases", targetAliases(pkg, "build"))
@@ -305,20 +339,23 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 			setAttr(r, "compile_data", inputs(opts.BuildCompileData))
 			setAttr(r, "data", inputs(buildData))
 			setAttr(r, "build_script_env", buildEnv)
-			flags, err := buildLints(filepath.Join(root, "Cargo.toml"), pkg.Manifest)
+			flags, err := buildLints(filepath.Join(pkg.WorkspaceRoot, "Cargo.toml"), pkg.Manifest)
 			if err != nil {
 				return nil, err
 			}
 			setAttr(r, "rustc_flags", rule.UnsortedStrings(flags))
 			rules = append(rules, r)
-		case "test":
+		case "test", "bench":
 			name := integrationName(base, target)
+			if kind == "bench" {
+				name = base + "-benches/" + target.Name
+			}
 			r := newRule("rust_test", name)
 			rustAttrs(r, pkg, target)
 			setHarness(r, target)
 			setAttr(r, "crate_root", file)
 			setAttr(r, "crate_name", strings.ReplaceAll(target.Name, "-", "_"))
-			setAttr(r, "srcs", []string{file})
+			setAttr(r, "srcs", targetSources(file))
 			setAttr(r, "compile_data", inputs(testData))
 			setAttr(r, "data", inputs(opts.TestData))
 			var local []string
@@ -329,16 +366,38 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 				local = append(local, ":"+base+"-build-script")
 			}
 			setAttr(r, "deps", deps([]string{"normal", "normal_dev"}, local...))
-			setAttr(r, "tags", []string{"restrict_" + base + "-integration-tests"})
+			if kind == "bench" {
+				setAttr(r, "tags", []string{"manual"})
+				setAttr(r, "args", []string{"--bench"})
+			} else {
+				setAttr(r, "tags", []string{"restrict_" + base + "-integration-tests"})
+			}
 			rules = append(rules, r)
-			tests = append(tests, ":"+name)
-		case "bin":
+			if kind == "test" {
+				tests = append(tests, ":"+name)
+			}
+		case "bin", "example":
 			name := base + "-bin"
 			if file != "src/main.rs" {
 				name += "-" + target.Name
 			}
-			binaries[target.Name] = ":" + name
-			r := newRule("rust_binary", name)
+			if kind == "example" {
+				name = base + "-examples/" + target.Name
+			} else {
+				binaries[target.Name] = ":" + name
+			}
+			ruleKind := "rust_binary"
+			if kind == "example" && len(target.CrateTypes) != 0 && target.CrateTypes[0] != "bin" {
+				ruleKind = crateRuleKind(target.CrateTypes[0])
+				if ruleKind == "" {
+					return nil, fmt.Errorf("unsupported example crate type %s", target.CrateTypes[0])
+				}
+			}
+			r := newRule(ruleKind, name)
+			if kind == "example" {
+				r.SetPrivateAttr("cargo_dev", true)
+				setAttr(r, "testonly", true)
+			}
 			rustAttrs(r, pkg, target)
 			setAttr(r, "crate_name", strings.ReplaceAll(target.Name, "-", "_"))
 			setAttr(r, "crate_root", file)
@@ -351,10 +410,31 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 			if hasBuild {
 				local = append(local, ":"+base+"-build-script")
 			}
-			setAttr(r, "deps", deps([]string{"normal"}, local...))
+			flags := []string{"normal"}
+			if kind == "example" {
+				flags = append(flags, "normal_dev")
+				setAttr(r, "aliases", targetAliases(pkg, "", "dev"))
+			}
+			setAttr(r, "deps", deps(flags, local...))
 			rules = append(rules, r)
+			if kind == "example" && len(target.CrateTypes) > 1 {
+				for _, typ := range target.CrateTypes[1:] {
+					outputKind := crateRuleKind(typ)
+					if outputKind == "" {
+						return nil, fmt.Errorf("unsupported example crate type %s", typ)
+					}
+					output := cloneContextRule(r, name+"-"+typ)
+					output.SetKind(outputKind)
+					output.SetPrivateAttr("cargo_template", name)
+					output.SetPrivateAttr("cargo_input_target", name)
+					rules = append(rules, output)
+				}
+			}
 			if target.Test {
 				rules = append(rules, unitTest(pkg, target, name, inputs(unitData)))
+			}
+			if target.Bench && kind == "bin" {
+				rules = append(rules, benchmark(pkg, target, name, inputs(unitData)))
 			}
 		default:
 			return nil, fmt.Errorf("Cargo target kind %s is not supported", kind)
@@ -452,4 +532,63 @@ func overrideSelect(value bzl.Expr, override []string, transform func(bzl.Expr, 
 		entries = append(entries, &bzl.KeyValueExpr{Key: branch.Key, Value: transform(branch.Value, override)})
 	}
 	return &bzl.CallExpr{X: call.X, List: []bzl.Expr{&bzl.DictExpr{List: entries, ForceMultiLine: true}}}, true
+}
+
+func packageRepoRoot(pkg cargoPackage) string {
+	if pkg.RepoRoot != "" {
+		return pkg.RepoRoot
+	}
+	return pkg.WorkspaceRoot
+}
+
+// Cargo reports library crate types in both kind and crate_types.
+func targetKind(t cargoTarget) string {
+	if len(t.Kind) == 0 {
+		return ""
+	}
+	for _, k := range t.Kind {
+		switch k {
+		case "lib", "rlib", "dylib", "cdylib", "staticlib":
+		default:
+			if len(t.Kind) == 1 {
+				return k
+			}
+			return ""
+		}
+	}
+	return "lib"
+}
+func crateRuleKind(kind string) string {
+	switch kind {
+	case "lib", "rlib":
+		return "rust_library"
+	case "dylib":
+		return "rust_dylib_library"
+	case "cdylib":
+		return "rust_shared_library"
+	case "staticlib":
+		return "rust_static_library"
+	case "proc-macro":
+		return "rust_proc_macro"
+	}
+	return ""
+}
+
+// Include shared modules without guessing Rust module declarations.
+func targetSources(root string) bzl.Expr {
+	dir := path.Dir(root)
+	pattern := "**/*.rs"
+	if dir != "." {
+		pattern = dir + "/**/*.rs"
+	}
+	return rule.ExprFromValue(rule.GlobValue{Patterns: []string{pattern}})
+}
+
+// Cargo uses the test harness with --bench for implicit benchmark targets.
+func benchmark(pkg cargoPackage, target cargoTarget, crate string, data bzl.Expr) *rule.Rule {
+	r := unitTest(pkg, target, crate, data)
+	r.SetName(crate + "-bench-test")
+	setAttr(r, "args", []string{"--bench"})
+	setAttr(r, "tags", []string{"manual"})
+	return r
 }

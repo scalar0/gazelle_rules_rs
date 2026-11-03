@@ -354,3 +354,98 @@ renamed = {package = "normal-support", path = "../normal", features = ["host-onl
 		t.Fatal("Generation changed a nested fixture in the second scope.")
 	}
 }
+
+// Each case uses the public runner without a project-specific scope flag.
+func TestWorkspaceLayouts(t *testing.T) {
+	runner, err := runfiles.Rlocation(*runnerPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cargo, err := runfiles.Rlocation(*cargoPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := runfiles.Rlocation(*rustcPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rustc, err := runfiles.Rlocation(strings.TrimSpace(string(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, layout := range []string{"root", "nested"} {
+		t.Run(layout, func(t *testing.T) {
+			root := t.TempDir()
+			put := func(name, text string) {
+				t.Helper()
+				file := filepath.Join(root, name)
+				if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(file, []byte(text), 0o644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			workspace := ""
+			if layout == "nested" {
+				workspace = "project/rust/"
+			}
+			put("MODULE.bazel", "module(name = \"layout\")\n")
+			put(workspace+"Cargo.toml", "[package]\nname='layout'\nversion='0.1.0'\nedition='2024'\n[workspace]\nmembers=['deep/member']\n")
+			put(workspace+"src/lib.rs", "pub fn value() -> u32 { 42 }\n")
+			put(workspace+"deep/member/Cargo.toml", "[package]\nname='member'\nversion='0.1.0'\nedition='2024'\n")
+			put(workspace+"deep/member/src/lib.rs", "pub fn value() -> u32 { 42 }\n")
+			put("backend.json", `{"manifest":"`+workspace+`Cargo.toml","platform_triples":["x86_64-unknown-linux-gnu"]}`)
+			run := func(want int, tool string, args ...string) {
+				t.Helper()
+				cmd := exec.Command(tool, args...)
+				cmd.Dir = root
+				cmd.Env = append(os.Environ(), "RUSTC="+rustc, "CARGO_NET_OFFLINE=true", "CARGO_HOME="+root+"/.cargo", "HOME="+root)
+				output, err := cmd.CombinedOutput()
+				code := 0
+				if err != nil {
+					if exit, ok := err.(*exec.ExitError); ok {
+						code = exit.ExitCode()
+					} else {
+						t.Fatal(err)
+					}
+				}
+				if code != want {
+					t.Fatalf("%v exited %d, want %d:\n%s", args, code, want, output)
+				}
+			}
+			run(0, cargo, "generate-lockfile", "--manifest-path", workspace+"Cargo.toml", "--offline")
+			args := []string{"-repo_root=" + root, "-rules_rs_config=" + root + "/backend.json", "-index=false", "-r=true", "."}
+			run(0, runner, args...)
+			run(0, runner, append([]string{"fix"}, args...)...)
+			run(0, runner, append([]string{"-mode=diff"}, args...)...)
+			file := filepath.Join(root, workspace, "BUILD.bazel")
+			before, err := os.ReadFile(file)
+			if err != nil {
+				t.Fatal(err)
+			}
+			name := "rust"
+			if layout == "root" {
+				name = "layout"
+			}
+			if !bytes.Contains(before, []byte(`name = "`+name+`"`)) {
+				t.Fatalf("Missing root target:\n%s", before)
+			}
+			// A late package conflict must leave the earlier package unchanged.
+			put(workspace+"deep/member/BUILD.bazel", "filegroup(name='member', srcs=[])\n")
+			put(workspace+"src/main.rs", "fn main() {}\n")
+			run(1, runner, args...)
+			after, err := os.ReadFile(file)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(before, after) {
+				t.Fatal("A late conflict changed an earlier BUILD file.")
+			}
+		})
+	}
+}

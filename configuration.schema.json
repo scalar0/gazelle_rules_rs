@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Gazelle rules_rs backend configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["platform_triples"],
+  "properties": {
+    "manifest": {"type": "string", "default": "Cargo.toml", "description": "The repository-relative Cargo workspace manifest."},
+    "platform_triples": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "description": "The same platform list passed to crate.from_cargo."},
+    "crates_repository": {"type": "string", "minLength": 1, "default": "crates", "description": "The apparent repository name for Cargo dependency helpers."},
+    "rules_repository": {"type": "string", "minLength": 1, "default": "rules_rs", "description": "The apparent repository name for Rust rules and platform conditions."}
+  }
+}

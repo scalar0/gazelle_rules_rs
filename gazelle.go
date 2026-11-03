@@ -5,6 +5,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	bzl "github.com/bazelbuild/buildtools/build"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -25,15 +27,27 @@ var directives = []string{
 }
 
 type extension struct {
-	root      string
-	packages  map[string]cargoPackage
-	generated []*rule.Rule
-	scope     string
+	handlers   []registeredHandler
+	kinds      map[string]rule.KindInfo
+	cfg        BackendConfig
+	configPath string
+	prepared   map[string][]*rule.Rule
+	root       string
+	packages   map[string]cargoPackage
+	generated  []*rule.Rule
+	scope      string
 }
 
-func NewV2() language.Language  { return &extension{} }
+func NewV2() language.Language {
+	result, err := New()
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
 func (*extension) Name() string { return "rules_rs" }
 func (e *extension) RegisterFlags(fs *flag.FlagSet, _ string, _ *config.Config) {
+	fs.StringVar(&e.configPath, "rules_rs_config", "", "Backend configuration file generated from MODULE settings.")
 	fs.Func("rules_rs_crate_scope", "Comma-separated workspace-relative directories that contain crate packages.", func(scopes string) error {
 		for _, scope := range strings.Split(scopes, ",") {
 			if scope == "" || scope == "." || scope == ".." || filepath.IsAbs(scope) || strings.HasPrefix(scope, "../") ||
@@ -53,8 +67,18 @@ func (e *extension) RegisterFlags(fs *flag.FlagSet, _ string, _ *config.Config) 
 }
 
 func (e *extension) CheckFlags(fs *flag.FlagSet, c *config.Config) error {
-	if err := checkScope(c.RepoRoot, c.WorkDir, e.scope, fs.Args()); err != nil {
-		return err
+	if e.scope != "" {
+		if err := checkScope(c.RepoRoot, c.WorkDir, e.scope, fs.Args()); err != nil {
+			return err
+		}
+	}
+	e.cfg = defaultBackendConfig()
+	if e.configPath != "" {
+		var err error
+		e.cfg, err = readBackendConfig(e.configPath)
+		if err != nil {
+			return err
+		}
 	}
 	e.root = c.RepoRoot
 	return nil
@@ -103,27 +127,30 @@ func (e *extension) Configure(ctx context.Context, args config.ConfigureArgs) er
 }
 func kindMap() map[string]rule.KindInfo {
 	attrs := map[string]bool{}
-	for _, key := range []string{"srcs", "crate", "crate_root", "crate_name", "edition", "aliases", "deps", "lint_config", "crate_features", "compile_data", "data", "tests", "tags", "rustc_flags", "rustc_env", "build_script_env", "version", "pkg_name", "visibility", "target_compatible_with", "actual", "use_libtest_harness", "timeout", "testonly"} {
+	for _, key := range []string{"srcs", "crate", "crate_root", "crate_name", "edition", "aliases", "deps", "lint_config", "crate_features", "compile_data", "data", "tests", "tags", "rustc_flags", "rustc_env", "build_script_env", "version", "pkg_name", "visibility", "target_compatible_with", "actual", "use_libtest_harness", "timeout", "testonly", "args", "rustdoc_flags"} {
 		attrs[key] = true
 	}
 	kinds := map[string]rule.KindInfo{}
-	for _, kind := range []string{"rust_library", "rust_proc_macro", "rust_binary", "rust_test", "cargo_build_script", "test_suite", "alias"} {
+	for _, kind := range []string{"rust_library", "rust_proc_macro", "rust_binary", "rust_test", "cargo_build_script", "test_suite", "alias", "rust_shared_library", "rust_static_library", "rust_dylib_library", "rust_doc_test"} {
 		kinds[kind] = rule.KindInfo{MergeableAttrs: attrs, NonEmptyAttrs: map[string]bool{"srcs": true, "crate": true, "tests": true, "actual": true}}
 	}
 	return kinds
 }
 
-func (*extension) Kinds() []rule.KindInfo {
+func (e *extension) Kinds() []rule.KindInfo {
 	result := []rule.KindInfo{}
-	for name, info := range kindMap() {
+	for name, info := range e.registeredKinds() {
 		info.Name = name
-		if name != "alias" && name != "test_suite" {
-			info.LoadedFrom = label.New("rules_rs", "rs", name+".bzl")
+		if _, core := kindMap()[name]; core && name != "alias" && name != "test_suite" {
+			info.LoadedFrom = label.New(e.rulesRepository(), "rs", name+".bzl")
+			if name == "rust_doc_test" || name == "rust_dylib_library" {
+				info.LoadedFrom = label.New("rules_rust", "rust", "defs.bzl")
+			}
 		}
 		result = append(result, info)
 	}
 	for _, name := range []string{"all_crate_deps", "aliases", "crate_name", "edition", "lint_config"} {
-		result = append(result, rule.KindInfo{Name: name, LoadedFrom: label.New("crates", "", "defs.bzl")})
+		result = append(result, rule.KindInfo{Name: name, LoadedFrom: label.New(e.cratesRepository(), "", "defs.bzl")})
 	}
 	slices.SortFunc(result, func(a, b rule.KindInfo) int { return strings.Compare(a.Name, b.Name) })
 	return result
@@ -136,24 +163,21 @@ func (e *extension) Generate(ctx context.Context, args language.GenerateArgs) (l
 	if err := ctx.Err(); err != nil {
 		return language.GenerateResult{}, err
 	}
-	if !inScope(e.scope, args.Rel) {
+	if e.scope != "" && !inScope(e.scope, args.Rel) {
 		return language.GenerateResult{}, nil
 	}
-	var rules []*rule.Rule
-	if pkg, ok := e.packages[args.Rel]; ok {
-		var err error
-		rules, err = generate(args.Config.RepoRoot, args.Rel, pkg, args.Config.Exts["rules_rs"].(settings))
-		if err == nil && pkg.Contexts != nil {
-			rules, err = generateContexts(args.Rel, pkg, rules)
-			if err == nil {
-				applySettings(rules, args.Config.Exts["rules_rs"].(settings))
-			}
+	rules := e.prepared[args.Rel]
+	if rules == nil && args.File != nil {
+		owned := false
+		for _, r := range args.File.Rules {
+			owned = owned || slices.Contains(r.Comments(), marker)
 		}
-		if err != nil {
-			return language.GenerateResult{}, errors.WithSeverity(errors.Critical, fmt.Errorf("generate %s: %w", args.Rel, err))
+		if !owned {
+			return language.GenerateResult{}, nil
 		}
 	}
-	result, err := reconcile(args.File, rules)
+
+	result, err := reconcileKinds(args.File, rules, e.registeredKinds())
 	if err != nil {
 		return language.GenerateResult{}, errors.WithSeverity(errors.Critical, fmt.Errorf("generate %s: %w", args.Rel, err))
 	}
@@ -163,6 +187,9 @@ func (e *extension) Generate(ctx context.Context, args language.GenerateArgs) (l
 
 // Reconcile returns merge inputs for marked rules and rejects handwritten name conflicts.
 func reconcile(file *rule.File, rules []*rule.Rule) (language.GenerateResult, error) {
+	return reconcileKinds(file, rules, kindMap())
+}
+func reconcileKinds(file *rule.File, rules []*rule.Rule, kinds map[string]rule.KindInfo) (language.GenerateResult, error) {
 	result := language.GenerateResult{Gen: rules, Imports: make([]interface{}, len(rules))}
 	names := map[string]*rule.Rule{}
 	for _, r := range rules {
@@ -174,7 +201,6 @@ func reconcile(file *rule.File, rules []*rule.Rule) (language.GenerateResult, er
 	if file == nil {
 		return result, nil
 	}
-	kinds := kindMap()
 	for _, old := range file.Rules {
 		owned := false
 		for _, comment := range old.Comments() {
@@ -232,11 +258,122 @@ var _ language.OnResolver = (*extension)(nil)
 // Load Cargo before Gazelle starts its directory walk.
 func (e *extension) OnStart(ctx context.Context) error {
 	var err error
-	e.packages, err = readMetadata(ctx, e.root, e.scope)
+	e.packages, err = readConfiguredMetadata(ctx, e.root, e.scope, e.cfg)
 	if err != nil {
 		return errors.WithSeverity(errors.Critical, err)
 	}
+	e.prepared = map[string][]*rule.Rule{}
+	paths := []string{}
+	for rel := range e.packages {
+		paths = append(paths, rel)
+	}
+	slices.Sort(paths)
+	for _, rel := range paths {
+		pkg := e.packages[rel]
+		contributions, err := e.metadataContributions(ctx, rel, pkg)
+		if err != nil {
+			return errors.WithSeverity(errors.Critical, err)
+		}
+		for _, contribution := range contributions {
+			if contribution.settings != nil {
+				buildInputs := pkg.Settings.BuildInputs
+				pkg.Settings = *contribution.settings
+				pkg.Settings.BuildInputs = buildInputs
+			}
+		}
+		rules, err := generate(e.root, rel, pkg, pkg.Settings)
+		if err == nil && pkg.Contexts != nil {
+			rules, err = generateContexts(rel, pkg, rules)
+			applySettings(rules, pkg.Settings)
+		}
+		if err != nil {
+			return errors.WithSeverity(errors.Critical, fmt.Errorf("generate %s: %w", rel, err))
+		}
+		rules, err = applyContributions(rules, contributions)
+		if err != nil {
+			return errors.WithSeverity(errors.Critical, err)
+		}
+		for _, r := range rules {
+			for _, key := range r.AttrKeys() {
+				expr := r.Attr(key)
+				bzl.Walk(expr, func(node bzl.Expr, _ []bzl.Expr) {
+					if value, ok := node.(*bzl.StringExpr); ok {
+						value.Value = strings.ReplaceAll(value.Value, "@rules_rs//", "@"+e.rulesRepository()+"//")
+						value.Value = strings.ReplaceAll(value.Value, "@crates//", "@"+e.cratesRepository()+"//")
+					}
+				})
+				setAttr(r, key, expr)
+			}
+		}
+		for _, name := range []string{"BUILD.bazel", "BUILD"} {
+			file := filepath.Join(e.root, rel, name)
+			if _, err := os.Stat(file); os.IsNotExist(err) {
+				continue
+			}
+			parsed, err := rule.LoadFile(file, rel)
+			if err != nil {
+				return errors.WithSeverity(errors.Critical, err)
+			}
+			if _, err := reconcileKinds(parsed, rules, e.registeredKinds()); err != nil {
+				return errors.WithSeverity(errors.Critical, fmt.Errorf("generate %s: %w", rel, err))
+			}
+			clearDeletedAttrs(rules)
+			break
+		}
+		e.prepared[rel] = rules
+	}
+
 	return nil
 }
 
 var _ language.OnStarter = (*extension)(nil)
+
+func (e *extension) rulesRepository() string {
+	if e.cfg.RulesRepository == "" {
+		return "rules_rs"
+	}
+	return e.cfg.RulesRepository
+}
+func (e *extension) cratesRepository() string {
+	if e.cfg.CratesRepository == "" {
+		return "crates"
+	}
+	return e.cfg.CratesRepository
+}
+
+func (e *extension) registeredKinds() map[string]rule.KindInfo {
+	if e.kinds != nil {
+		return e.kinds
+	}
+	return kindMap()
+}
+
+// Fix updates backend load labels when a consumer renames its repositories.
+func (e *extension) Fix(ctx context.Context, args language.FixArgs) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if args.File == nil || e.prepared[args.Rel] == nil {
+		return nil
+	}
+	for _, old := range args.File.Loads {
+		name := old.Name()
+		name = strings.ReplaceAll(name, "@rules_rs//", "@"+e.rulesRepository()+"//")
+		name = strings.ReplaceAll(name, "@crates//", "@"+e.cratesRepository()+"//")
+		if name == old.Name() || slices.Contains(old.Comments(), "# keep") {
+			continue
+		}
+		fresh := rule.NewLoad(name)
+		for _, pair := range old.SymbolPairs() {
+			fresh.AddAlias(pair.From, pair.To)
+		}
+		for _, comment := range old.Comments() {
+			fresh.AddComment(comment)
+		}
+		fresh.Insert(args.File, old.Index())
+		old.Delete()
+	}
+	return nil
+}
+
+var _ language.Fixer = (*extension)(nil)

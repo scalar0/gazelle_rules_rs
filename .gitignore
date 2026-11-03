@@ -1,1 +1,4 @@
 /bazel-*
+/target/
+/tests/consumer/bazel-*
+/tests/consumer/target/
