@@ -12,7 +12,7 @@ gazelle_binary(
 
 gazelle(
     name = "gazelle",
-    args = ["-rules_rs_config=$(location @gazelle_backend//:config.json)"],
+    args = ["-rules_rs_config=$(execpath @gazelle_backend//:config.json)"],
     data = ["@gazelle_backend//:config.json"],
     gazelle = ":runner",
 )

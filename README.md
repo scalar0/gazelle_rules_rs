@@ -61,7 +61,7 @@ backend_config(
 ```
 
 Add `@gazelle_backend//:config.json` to the Gazelle rule's `data`.
-Set its argument to `-rules_rs_config=$(location @gazelle_backend//:config.json)`.
+Set its argument to `-rules_rs_config=$(execpath @gazelle_backend//:config.json)`.
 The [configuration schema](configuration.schema.json) defines the public settings.
 Repository names use their apparent Bzlmod names without `@`.
 The rules_rust repository currently uses the apparent name `rules_rust`.
