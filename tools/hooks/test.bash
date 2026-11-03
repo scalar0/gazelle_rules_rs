@@ -3,6 +3,7 @@
 set -euo pipefail
 root=$(cd -- "${BASH_SOURCE[0]%/*}/../.." && pwd -P)
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/gazelle_rules_rs-git-test-XXXXXXXX")
+scratch=$(cd -- "$scratch" && pwd -P)
 trap 'rm -rf -- "$scratch"' EXIT
 export JUST_TEMPDIR="$scratch"
 export GIT_CONFIG_NOSYSTEM=1
