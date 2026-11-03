@@ -2,16 +2,16 @@ package rulesrs
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"slices"
 	"strings"
 
-	"github.com/bazelbuild/bazel-gazelle/rule"
+	"github.com/bazel-contrib/bazel-gazelle/v2/rule"
 	"github.com/bazelbuild/rules_go/go/runfiles"
 	"github.com/pelletier/go-toml/v2"
 )
@@ -107,9 +107,9 @@ func inScope(scope, rel string) bool {
 	return false
 }
 
-func cargoToolOutput(root, tool string, args ...string) ([]byte, error) {
+func cargoToolOutput(ctx context.Context, root, tool string, args ...string) ([]byte, error) {
 	args = append(args, "--locked", "--manifest-path", filepath.Join(root, "Cargo.toml"))
-	manifest, err := runfiles.Rlocation("_main/tools/gazelle/rust/rustc_path")
+	manifest, err := runfiles.Rlocation(rustcRunfile)
 	if err != nil {
 		return nil, fmt.Errorf("find declared Rust compiler manifest: %w", err)
 	}
@@ -121,7 +121,7 @@ func cargoToolOutput(root, tool string, args ...string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("find declared Rust compiler: %w", err)
 	}
-	cmd := exec.Command(tool, args...)
+	cmd := exec.CommandContext(ctx, tool, args...)
 	cmd.Dir = root
 	for _, entry := range os.Environ() {
 		key, _, _ := strings.Cut(entry, "=")
@@ -140,19 +140,19 @@ func cargoToolOutput(root, tool string, args ...string) ([]byte, error) {
 }
 
 func pinnedCargo() (string, error) {
-	tool, err := runfiles.Rlocation("gazelle_cargo_" + runtime.GOOS + "_" + runtime.GOARCH + "/cargo/bin/cargo")
+	tool, err := runfiles.Rlocation(cargoRunfile)
 	if err != nil {
 		return "", fmt.Errorf("Find pinned Cargo: %w", err)
 	}
 	return tool, nil
 }
 
-func loadCargoMetadata(root, tool string, noDeps bool) (metadata, error) {
+func loadCargoMetadata(ctx context.Context, root, tool string, noDeps bool) (metadata, error) {
 	args := []string{"metadata", "--format-version=1"}
 	if noDeps {
 		args = append(args, "--no-deps")
 	}
-	output, err := cargoToolOutput(root, tool, args...)
+	output, err := cargoToolOutput(ctx, root, tool, args...)
 	if err != nil {
 		return metadata{}, err
 	}
@@ -195,12 +195,12 @@ func loadCargoMetadata(root, tool string, noDeps bool) (metadata, error) {
 	return data, nil
 }
 
-func readMetadata(root, scope string) (map[string]cargoPackage, error) {
+func readMetadata(ctx context.Context, root, scope string) (map[string]cargoPackage, error) {
 	tool, err := pinnedCargo()
 	if err != nil {
 		return nil, err
 	}
-	data, err := loadCargoMetadata(root, tool, false)
+	data, err := loadCargoMetadata(ctx, root, tool, false)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +221,7 @@ func readMetadata(root, scope string) (map[string]cargoPackage, error) {
 			result[rel] = pkg
 		}
 	}
-	if err := readContexts(root, tool, result, data.Members); err != nil {
+	if err := readContexts(ctx, root, tool, result, data.Members); err != nil {
 		return nil, err
 	}
 	return result, nil

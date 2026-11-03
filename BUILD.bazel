@@ -1,6 +1,6 @@
 load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
 load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
-load(":rustc.bzl", "rustc_runfiles")
+load(":rustc.bzl", "rustc_runfiles", "tool_paths")
 
 exports_files([
     "cargo.MODULE.bazel",
@@ -8,7 +8,7 @@ exports_files([
 
 exports_files(
     ["metadata.schema.json"],
-    visibility = ["//.cargo:__pkg__"],
+    visibility = ["//visibility:public"],
 )
 
 config_setting(
@@ -61,6 +61,12 @@ filegroup(
     output_group = "sysroot",
 )
 
+tool_paths(
+    name = "tool_paths",
+    cargo = ":cargo",
+    rustc = ":rustc",
+)
+
 go_library(
     name = "rules_rs",
     srcs = [
@@ -72,23 +78,24 @@ go_library(
         "options.go",
         "platforms.go",
         "vendor_config.go",
+        ":tool_paths",
     ],
     data = [
         ":cargo",
         ":rustc",
     ],
     embedsrcs = ["metadata.schema.json"],
-    importpath = "kernel-toolchain/tools/gazelle/rust",
+    importpath = "github.com/scalar0/gazelle_rules_rs",
+    visibility = ["//visibility:public"],
     deps = [
         "@com_github_bazelbuild_buildtools//build",
         "@com_github_pelletier_go_toml_v2//:go-toml",
         "@com_github_santhosh_tekuri_jsonschema_v6//:jsonschema",
-        "@gazelle//config",
-        "@gazelle//label",
-        "@gazelle//language",
-        "@gazelle//repo",
-        "@gazelle//resolve",
-        "@gazelle//rule",
+        "@gazelle//v2/config",
+        "@gazelle//v2/errors",
+        "@gazelle//v2/label",
+        "@gazelle//v2/language",
+        "@gazelle//v2/rule",
         "@rules_go//go/runfiles",
     ],
 )
@@ -106,6 +113,7 @@ go_binary(
 gazelle_binary(
     name = "gazelle_binary",
     languages = [":rules_rs"],
+    version = 2,
 )
 
 gazelle(
@@ -125,8 +133,8 @@ go_test(
     ],
     embed = [":rules_rs"],
     deps = [
-        "@gazelle//merger",
-        "@gazelle//rule",
+        "@gazelle//v2/merger",
+        "@gazelle//v2/rule",
     ],
 )
 

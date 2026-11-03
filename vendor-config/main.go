@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	rulesrs "kernel-toolchain/tools/gazelle/rust"
+	rulesrs "github.com/scalar0/gazelle_rules_rs"
 )
 
 func main() {

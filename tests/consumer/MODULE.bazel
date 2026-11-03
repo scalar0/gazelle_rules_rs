@@ -1,0 +1,37 @@
+module(name = "gazelle_rules_rs_consumer")
+
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "rules_rs", version = "0.2.1")
+bazel_dep(name = "llvm", version = "0.8.26")
+
+crate = use_extension("@rules_rs//rs:extensions.bzl", "crate")
+crate.from_cargo(
+    name = "crates",
+    cargo_lock = "//:Cargo.lock",
+    cargo_toml = "//:Cargo.toml",
+    generate_lint_config = True,
+    platform_triples = [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu",
+    ],
+)
+use_repo(crate, "crates")
+
+toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
+toolchains.toolchain(
+    edition = "2024",
+    version = "1.99.1",
+)
+use_repo(toolchains, "default_rust_toolchains")
+
+register_toolchains("@default_rust_toolchains//rustc:all", "@llvm//toolchain:all")
+
+bazel_dep(name = "gazelle_rules_rs", version = "0.0.0")
+local_path_override(
+    module_name = "gazelle_rules_rs",
+    path = "../..",
+)
+
+bazel_dep(name = "gazelle", version = "2.0.0-beta.2")

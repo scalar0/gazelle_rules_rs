@@ -2,6 +2,7 @@
 package rulesrs
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/bazelbuild/bazel-gazelle/rule"
+	"github.com/bazel-contrib/bazel-gazelle/v2/rule"
 	bzl "github.com/bazelbuild/buildtools/build"
 )
 
@@ -82,7 +83,7 @@ func unitName(pkg cargoPackage, unit cargoUnit) (string, error) {
 	return name, nil
 }
 
-func readContexts(root, tool string, packages map[string]cargoPackage, members []string) error {
+func readContexts(ctx context.Context, root, tool string, packages map[string]cargoPackage, members []string) error {
 	needed := false
 	for _, pkg := range packages {
 		needed = needed || len(pkg.DeclaredFeatures) != 0
@@ -104,7 +105,7 @@ func readContexts(root, tool string, packages map[string]cargoPackage, members [
 			if command == "test" {
 				args = append(args, "--all-targets")
 			}
-			output, err := cargoToolOutput(root, tool, args...)
+			output, err := cargoToolOutput(ctx, root, tool, args...)
 			if err != nil {
 				return err
 			}

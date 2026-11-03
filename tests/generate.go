@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bazelbuild/bazel-gazelle/rule"
+	"github.com/bazel-contrib/bazel-gazelle/v2/rule"
 )
 
 func put(t *testing.T, root, name, text string) {
@@ -310,7 +310,7 @@ func TestExpressionMerge(t *testing.T) {
 	setAttr(fresh, "srcs", librarySources("src/lib.rs"))
 	setAttr(fresh, "deps", deps([]string{"normal"}, ":probe-build-script"))
 	setAttr(fresh, "compile_data", inputs([]string{"resources/*", "//schemas:all"}))
-	mergeable := (&extension{}).Kinds()["rust_library"].MergeableAttrs
+	mergeable := kindMap()["rust_library"].MergeableAttrs
 	rule.MergeRules(fresh, file.Rules[0], mergeable, "BUILD.bazel")
 	first := string(file.Format())
 	for _, want := range []string{"all_crate_deps(normal = True) + [\":probe-build-script\"]", "glob([\"resources/*\"]) + [\"//schemas:all\"]", "src/**/*.rs", "src/main.rs"} {

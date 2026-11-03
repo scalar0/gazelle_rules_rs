@@ -1,0 +1,12 @@
+load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
+
+gazelle_binary(
+    name = "runner",
+    languages = ["@gazelle_rules_rs//:rules_rs"],
+    version = 2,
+)
+
+gazelle(
+    name = "gazelle",
+    gazelle = ":runner",
+)

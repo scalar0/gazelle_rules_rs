@@ -1,9 +1,10 @@
 # Gazelle extension for rules_rs
 
 The native Go extension generates direct `rules_rs` declarations from Cargo metadata.
-The [Aspect scope configuration](../../../.aspect/gazelle_scopes.axl) selects immediate crate packages for generation.
+The caller selects immediate crate packages with the `rules_rs_crate_scope` flag.
 The runner loads this extension and Gazelle's built-in package defaults.
-The root module pins Gazelle, and Aspect uses the pinned runner.
+The [module](MODULE.bazel) pins Gazelle.
+The runner uses the native Gazelle v2 interface.
 
 Cargo owns package metadata, targets, dependency resolution, features, and lint settings.
 The extension reads `cargo metadata --locked` through the public Cargo interface.
@@ -13,7 +14,7 @@ The Rust compiler stays on the existing stable toolchain.
 
 The generated rules call the public `@crates` helpers for dependencies, aliases, crate names, editions, and lint settings.
 The existing `rules_rs` extension still resolves dependency kinds and platform conditions.
-The [root module](../../../MODULE.bazel) owns platform configuration.
+The consumer root module owns platform configuration.
 Cargo dependency kinds filter local aliases for each target.
 This prevents development aliases from creating production dependency cycles through test-support crates.
 Context rules replace canonical local aliases with their selected context labels.
@@ -81,7 +82,7 @@ Gazelle removes obsolete context declarations.
 The required `-rules_rs_crate_scope` flag accepts comma-separated workspace-relative directories that contain crate packages.
 The runner rejects generation arguments outside those directories and their immediate crate directories.
 The extension has no default project scope.
-Aspect owns project scopes and generation flags.
+The caller owns project scopes and generation flags.
 Callers supply these values to the Bazel runner.
 The [options implementation](options.go) owns this generation mechanism.
 
@@ -90,9 +91,7 @@ The [options implementation](options.go) owns this generation mechanism.
 Declare extra inputs in `[package.metadata.rules_rs]`.
 Use `[workspace.metadata.rules_rs]` for shared defaults.
 The [metadata schema](metadata.schema.json) defines all fields and path rules.
-Cargo manifests select the [local Cargo schema](../../../.cargo/schema.json) for editor support and Taplo validation.
-The local Cargo schema references the official SchemaStore Cargo schema.
-The [schema generator](../../../.cargo/schema.jq) bundles the source metadata schemas into that document.
+Consumers can reference the metadata schema from their Cargo editor schema.
 The shared Go reader validates these declarations before either generator writes files.
 Unknown fields and legacy `rules_rs` BUILD directives cause an error.
 
@@ -156,7 +155,7 @@ External dependency features and platform conditions remain under the existing `
 
 The Go module lists external Go packages for Bzlmod.
 The root Bazel module supplies Gazelle itself.
-The [Justfile](../../../Justfile) owns development commands and checks.
+The [Justfile](Justfile) owns development commands and checks.
 
 ## Regression fixtures
 
@@ -173,3 +172,30 @@ The fixture uses only local Cargo dependencies and runs Cargo offline.
 
 The fixture includes Bazel module and BUILD templates for a separate `rules_rs` build check.
 The templates do not create additional packages in the production workspace.
+
+## Development status
+
+This repository contains the extension extracted from `scalar0/kernel-toolchain` commit `20971ec52ecdca2534c53171944ab4425cc09fc4`.
+The [Apache-2.0 license](LICENSE) continues to apply.
+The repository is private and has no public release.
+
+The extension has a standalone Bzlmod module and a public `//:rules_rs` language library.
+A custom `gazelle_binary` can include that library in its `languages` list.
+Consumers must register the Rust toolchain that generation will use.
+Bazel supplies Cargo and Rust compiler runfile paths during the build.
+The optional `//:vendor-config` executable remains separate from Gazelle.
+
+The current generation contract still requires an explicit immediate-child crate scope and a root Cargo workspace.
+Platform discovery still requires a literal `crates.from_cargo` declaration in the consumer module.
+Full Cargo target support and external metadata handlers remain required before public adoption.
+
+## Adoption gate
+
+The standalone unit and integration tests pass on Linux x86_64.
+The separate [consumer fixture](tests/consumer/MODULE.bazel) generates, builds, and tests a Rust library through the external language library.
+These checks do not establish full Cargo compatibility or support for other hosts.
+
+The pinned rules_rs dependency does not expose a public machine-readable platform configuration.
+Its generated dependency helpers retain the platform list in a private symbol.
+A public backend configuration interface must supply that list before the extension can remove MODULE syntax restrictions without duplicate configuration.
+Public adoption remains blocked on that interface and the remaining target and handler work.

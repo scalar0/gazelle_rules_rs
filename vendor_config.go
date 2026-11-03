@@ -2,6 +2,7 @@ package rulesrs
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -100,7 +101,7 @@ func SyncVendorConfig(root string, write bool) error {
 	if err != nil {
 		return err
 	}
-	data, err := loadCargoMetadata(root, tool, true)
+	data, err := loadCargoMetadata(context.Background(), root, tool, true)
 	if err != nil {
 		return err
 	}

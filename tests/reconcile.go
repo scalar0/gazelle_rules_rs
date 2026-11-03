@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bazelbuild/bazel-gazelle/merger"
-	"github.com/bazelbuild/bazel-gazelle/rule"
+	"github.com/bazel-contrib/bazel-gazelle/v2/merger"
+	"github.com/bazel-contrib/bazel-gazelle/v2/rule"
 )
 
 func TestConfiguredScope(t *testing.T) {
@@ -107,7 +107,7 @@ rust_test(name = "probe-unit-tests", crate = ":probe", deps = all_crate_deps(nor
 	if err != nil {
 		t.Fatal(err)
 	}
-	merger.MergeFile(file, result.Empty, result.Gen, merger.PreResolve, (&extension{}).Kinds(), nil)
+	merger.MergeFile(merger.MergeFileArgs{File: file, Empty: result.Empty, Gen: result.Gen, Phase: merger.PreResolve, GetKindInfo: func(r *rule.Rule) rule.KindInfo { return kindMap()[r.Kind()] }})
 	output := string(file.Format())
 	for _, removed := range []string{"rust_library(", "rust_test(", "all_crate_deps"} {
 		if strings.Contains(output, removed) {
@@ -268,8 +268,9 @@ timeout = "long", # keep
 			if err != nil {
 				t.Fatal(err)
 			}
-			merger.MergeFile(file, result.Empty, result.Gen, merger.PreResolve, (&extension{}).Kinds(), nil)
-			merger.MergeFile(file, nil, result.Gen, merger.PostResolve, (&extension{}).Kinds(), nil)
+			merger.MergeFile(merger.MergeFileArgs{File: file, Empty: result.Empty, Gen: result.Gen, Phase: merger.PreResolve, GetKindInfo: func(r *rule.Rule) rule.KindInfo { return kindMap()[r.Kind()] }})
+			clearDeletedAttrs(result.Gen)
+			merger.MergeFile(merger.MergeFileArgs{File: file, Empty: nil, Gen: result.Gen, Phase: merger.PostResolve, GetKindInfo: func(r *rule.Rule) rule.KindInfo { return kindMap()[r.Kind()] }})
 		}
 		merge()
 		unit := file.Rules[0]
@@ -290,5 +291,21 @@ timeout = "long", # keep
 		if first != string(file.Format()) {
 			t.Fatal("The repeated merge changed the rule")
 		}
+	}
+}
+
+func TestReconcileLeavesParsedRulesUnchanged(t *testing.T) {
+	file, err := rule.LoadData("BUILD.bazel", "crates/probe", []byte(marker+"\nrust_test(name = \"unit\", srcs = [\"src/lib.rs\"], crate_root = \"src/lib.rs\")\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	before := string(file.Format())
+	fresh := newRule("rust_test", "unit")
+	setAttr(fresh, "crate", ":probe")
+	if _, err := reconcile(file, []*rule.Rule{fresh}); err != nil {
+		t.Fatal(err)
+	}
+	if string(file.Format()) != before {
+		t.Fatal("Generation changed parsed rules.")
 	}
 }
