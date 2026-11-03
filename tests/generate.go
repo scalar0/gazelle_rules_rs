@@ -52,7 +52,7 @@ func TestConventionalCrate(t *testing.T) {
 		"crate_name = crate_name()", "edition = edition()", "lint_config = lint_config()", "aliases = aliases()",
 		"all_crate_deps(normal = True) + [\":probe-build-script\"]",
 		"normal_dev = True", "all_crate_deps(build = True)",
-		"probe-integration-tests/roundtrip", `srcs = glob(["tests/**/*.rs"])`, "src/**/*.rs",
+		"probe-integration-tests/roundtrip", `srcs = ["tests/roundtrip.rs"]`, `srcs = ["src/lib.rs"]`,
 		"--forbid=unsafe_code", "--warn=clippy::all", "--deny=clippy::unwrap_used", "syntax",
 	} {
 		if !strings.Contains(output, want) {
@@ -78,7 +78,7 @@ func TestConventionalCrate(t *testing.T) {
 		t.Fatal(err)
 	}
 	if rendered(changed) != output {
-		t.Error("Library source changes must not change the generated glob.")
+		t.Error("Unreferenced source changes must not change the generated inputs.")
 	}
 }
 
@@ -104,6 +104,10 @@ func TestIntegrationTargetIdentity(t *testing.T) {
 			{Name: "other", Kind: []string{"test"}, Source: filepath.Join(root, rel, "tests/other.rs")},
 		},
 	}
+	for _, target := range pkg.Targets {
+		name, _ := filepath.Rel(root, target.Source)
+		put(t, root, name, "")
+	}
 	rules, err := generate(root, rel, pkg, settings{})
 	if err != nil {
 		t.Fatal(err)
@@ -114,8 +118,8 @@ func TestIntegrationTargetIdentity(t *testing.T) {
 		if err != nil || name != r.Name() || name != "probe-integration-tests/"+target.Name {
 			t.Fatalf("Test and context names differ: %s, %s, %v", name, r.Name(), err)
 		}
-		if _, ok := rule.ParseGlobExpr(r.Attr("srcs")); !ok {
-			t.Fatal("The test must include shared source modules.")
+		if got := r.AttrStrings("srcs"); len(got) != 1 || got[0] != "tests/"+filepath.Base(target.Source) {
+			t.Fatal("The test must contain only its source files.")
 		}
 		if r.AttrString("crate_root") != "tests/"+filepath.Base(target.Source) {
 			t.Fatal("The test root changed.")
@@ -221,6 +225,10 @@ func TestBinaryRuntimeInputs(t *testing.T) {
 		{"glob", settings{TestData: []string{"fixtures/*"}}, `data = glob(["fixtures/*"]) + [":probe-bin"]`},
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			for _, target := range pkg.Targets {
+				name, _ := filepath.Rel(root, target.Source)
+				put(t, root, name, "")
+			}
 			rules, err := generate(root, rel, pkg, test.opts)
 			if err != nil {
 				t.Fatal(err)
@@ -249,8 +257,8 @@ func TestBinaryUnitTests(t *testing.T) {
 	if len(rules) != 2 || rules[1].AttrString("crate") != ":probe-bin-tool" {
 		t.Fatal("The binary needs a linked unit test target.")
 	}
-	if _, ok := rule.ParseGlobExpr(rules[0].Attr("srcs")); !ok {
-		t.Fatal("A conventional binary must use a source glob.")
+	if got := rules[0].AttrStrings("srcs"); len(got) != 1 || got[0] != "src/bin/tool.rs" {
+		t.Fatal("The binary must contain only its source files.")
 	}
 }
 
@@ -267,6 +275,10 @@ func TestTargetEdition(t *testing.T) {
 					Name: "probe", Kind: []string{kind},
 					Source: filepath.Join(root, rel, "src/lib.rs"), Edition: "2021", Test: true,
 				}},
+			}
+			for _, target := range pkg.Targets {
+				name, _ := filepath.Rel(root, target.Source)
+				put(t, root, name, "")
 			}
 			rules, err := generate(root, rel, pkg, settings{})
 			if err != nil {
@@ -310,13 +322,13 @@ func TestExpressionMerge(t *testing.T) {
 		t.Fatal(err)
 	}
 	fresh := newRule("rust_library", "probe")
-	setAttr(fresh, "srcs", librarySources("src/lib.rs"))
+	setAttr(fresh, "srcs", rule.ExprFromValue([]string{"src/lib.rs"}))
 	setAttr(fresh, "deps", deps([]string{"normal"}, ":probe-build-script"))
 	setAttr(fresh, "compile_data", inputs([]string{"resources/*", "//schemas:all"}))
 	mergeable := kindMap()["rust_library"].MergeableAttrs
 	rule.MergeRules(fresh, file.Rules[0], mergeable, "BUILD.bazel")
 	first := string(file.Format())
-	for _, want := range []string{"all_crate_deps(normal = True) + [\":probe-build-script\"]", "glob([\"resources/*\"]) + [\"//schemas:all\"]", "src/**/*.rs", "src/main.rs"} {
+	for _, want := range []string{"all_crate_deps(normal = True) + [\":probe-build-script\"]", "glob([\"resources/*\"]) + [\"//schemas:all\"]", "src/lib.rs"} {
 		if !strings.Contains(first, want) {
 			t.Fatalf("Missing %q after merge:\n%s", want, first)
 		}
@@ -339,5 +351,54 @@ func TestExpressionMerge(t *testing.T) {
 		if file.Rules[0].Attr(key) != nil {
 			t.Errorf("Removed rule retains %s", key)
 		}
+	}
+}
+
+func TestTargetSourceIsolation(t *testing.T) {
+	root := t.TempDir()
+	put(t, root, "Cargo.toml", "[package]\nname = 'probe'\n")
+	files := map[string]string{
+		"build.rs":              "mod build_support; fn main() {}",
+		"build_support.rs":      "",
+		"src/lib.rs":            "mod helper;",
+		"src/helper.rs":         "",
+		"src/main.rs":           "fn main() {}",
+		"src/bin/tool.rs":       "fn main() {}",
+		"tests/first.rs":        "mod shared;",
+		"tests/second.rs":       "",
+		"tests/shared/mod.rs":   "mod child;",
+		"tests/shared/child.rs": "",
+		"examples/demo.rs":      "fn main() {}",
+		"examples/other.rs":     "fn main() {}",
+		"benches/speed.rs":      "",
+		"benches/other.rs":      "",
+		"unused.rs":             "",
+	}
+	for name, source := range files {
+		put(t, root, name, source)
+	}
+	for _, tc := range []struct {
+		kind, root string
+		want       []string
+	}{
+		{"custom-build", "build.rs", []string{"build.rs", "build_support.rs"}},
+		{"lib", "src/lib.rs", []string{"src/helper.rs", "src/lib.rs"}},
+		{"bin", "src/main.rs", []string{"src/main.rs"}},
+		{"bin", "src/bin/tool.rs", []string{"src/bin/tool.rs"}},
+		{"test", "tests/first.rs", []string{"tests/first.rs", "tests/shared/child.rs", "tests/shared/mod.rs"}},
+		{"test", "tests/second.rs", []string{"tests/second.rs"}},
+		{"example", "examples/demo.rs", []string{"examples/demo.rs"}},
+		{"bench", "benches/speed.rs", []string{"benches/speed.rs"}},
+	} {
+		t.Run(tc.root, func(t *testing.T) {
+			pkg := cargoPackage{Name: "probe", Manifest: filepath.Join(root, "Cargo.toml"), Targets: []cargoTarget{{Name: "probe", Kind: []string{tc.kind}, Source: filepath.Join(root, tc.root)}}}
+			rules, err := generate(root, "", pkg, settings{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := strings.Join(rules[0].AttrStrings("srcs"), ","); got != strings.Join(tc.want, ",") {
+				t.Fatalf("Source inputs = %s, want %v.\n%s", got, tc.want, rendered(rules))
+			}
+		})
 	}
 }

@@ -15,12 +15,14 @@ func contextFixture(t *testing.T, root string) (map[string]cargoPackage, unitGra
 	for _, name := range []string{"a", "b"} {
 		rel := "crates/" + name
 		put(t, root, rel+"/Cargo.toml", "[package]\nname = '"+name+"'\n")
+		put(t, root, rel+"/src/lib.rs", "")
 		packages[rel] = cargoPackage{
 			ID: name, Name: name, Manifest: filepath.Join(root, rel, "Cargo.toml"),
 			Targets:  []cargoTarget{{Kind: []string{"lib"}, Source: filepath.Join(root, rel, "src/lib.rs")}},
 			Contexts: &packageContexts{Platforms: []string{platform}, Bindings: map[string]map[string]*contextTarget{}, Variants: map[string]*contextTarget{}},
 		}
 	}
+	put(t, root, "crates/b/build.rs", "")
 	b := packages["crates/b"]
 	b.Targets = append(b.Targets, cargoTarget{Kind: []string{"custom-build"}, Source: filepath.Join(root, "crates/b/build.rs")})
 	packages["crates/b"] = b

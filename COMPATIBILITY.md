@@ -61,9 +61,11 @@ The consumer smoke benchmark uses a stable custom harness.
 
 The extension processes one Cargo workspace per invocation.
 Workspace members and target sources must remain inside the Bazel repository.
-Target source roots must remain inside their Cargo package.
-Custom target-directory configuration and arbitrary Rust module paths outside target directories require explicit source support.
-Nested Bazel package boundaries can exclude Rust source files from globs.
+Rust source references must remain inside their Cargo package.
+Source discovery follows literal module paths and include paths, including paths outside the target directory.
+Source discovery rejects references across nested Bazel package boundaries.
+Macro expansion and computed source paths require explicit `srcs` with a Gazelle `# keep` comment.
+Conditional branches share one source list across supported platforms.
 
 The backend owns external feature resolution and platform-specific dependency helpers.
 The generator rejects unknown unit-graph versions and invalid graph indices, roots, or cycles.

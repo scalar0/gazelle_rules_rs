@@ -57,22 +57,6 @@ func newRule(kind, name string) *rule.Rule {
 	return r
 }
 
-func librarySources(root string) bzl.Expr {
-	if !strings.HasPrefix(root, "src/") {
-		return targetSources(root)
-	}
-	covered := strings.HasPrefix(root, "src/") && strings.HasSuffix(root, ".rs") && root != "src/main.rs"
-	glob := rule.ExprFromValue(rule.GlobValue{
-		Patterns:   []string{"src/**/*.rs"},
-		Excludes:   []string{"src/main.rs"},
-		AllowEmpty: !covered,
-	})
-	if covered {
-		return glob
-	}
-	return &bzl.BinaryExpr{X: glob, Op: "+", Y: rule.ExprFromValue([]string{root})}
-}
-
 func setEdition(r *rule.Rule, pkg cargoPackage, target cargoTarget) {
 	if target.Edition != "" && target.Edition != pkg.Edition {
 		setAttr(r, "edition", target.Edition)
@@ -291,6 +275,10 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 		if err != nil {
 			return nil, err
 		}
+		sources, err := sourceFiles(dir, file)
+		if err != nil {
+			return nil, err
+		}
 		kind := targetKind(target)
 		switch kind {
 		case "lib", "proc-macro":
@@ -302,7 +290,7 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 			rustAttrs(r, pkg, target)
 			setAttr(r, "crate_name", call("crate_name"))
 			setAttr(r, "crate_root", file)
-			setAttr(r, "srcs", librarySources(file))
+			setAttr(r, "srcs", rule.ExprFromValue(sources))
 			setAttr(r, "compile_data", inputs(libraryData))
 			var local []string
 			if hasBuild {
@@ -339,7 +327,7 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 
 		case "custom-build":
 			r := newRule("cargo_build_script", base+"-build-script")
-			setAttr(r, "srcs", targetSources(file))
+			setAttr(r, "srcs", rule.ExprFromValue(sources))
 			setAttr(r, "crate_root", file)
 			setEdition(r, pkg, target)
 			setAttr(r, "aliases", targetAliases(pkg, "build"))
@@ -366,7 +354,7 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 			setHarness(r, target)
 			setAttr(r, "crate_root", file)
 			setAttr(r, "crate_name", strings.ReplaceAll(target.Name, "-", "_"))
-			setAttr(r, "srcs", targetSources(file))
+			setAttr(r, "srcs", rule.ExprFromValue(sources))
 			setAttr(r, "compile_data", inputs(testData))
 			setAttr(r, "data", inputs(opts.TestData))
 			var local []string
@@ -412,7 +400,7 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 			rustAttrs(r, pkg, target)
 			setAttr(r, "crate_name", strings.ReplaceAll(target.Name, "-", "_"))
 			setAttr(r, "crate_root", file)
-			setAttr(r, "srcs", librarySources(file))
+			setAttr(r, "srcs", rule.ExprFromValue(sources))
 			setAttr(r, "compile_data", inputs(libraryData))
 			var local []string
 			if hasLib {
@@ -584,16 +572,6 @@ func crateRuleKind(kind string) string {
 		return "rust_proc_macro"
 	}
 	return ""
-}
-
-// Include shared modules without guessing Rust module declarations.
-func targetSources(root string) bzl.Expr {
-	dir := path.Dir(root)
-	pattern := "**/*.rs"
-	if dir != "." {
-		pattern = dir + "/**/*.rs"
-	}
-	return rule.ExprFromValue(rule.GlobValue{Patterns: []string{pattern}})
 }
 
 // Cargo uses the test harness with --bench for implicit benchmark targets.

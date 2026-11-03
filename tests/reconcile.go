@@ -102,7 +102,7 @@ rust_test(name = "probe-unit-tests", crate = ":probe", deps = all_crate_deps(nor
 		t.Fatal(err)
 	}
 	macro := newRule("rust_proc_macro", "probe")
-	setAttr(macro, "srcs", librarySources("src/lib.rs"))
+	setAttr(macro, "srcs", rule.ExprFromValue([]string{"src/lib.rs"}))
 	result, err := reconcile(file, []*rule.Rule{macro})
 	if err != nil {
 		t.Fatal(err)
@@ -197,6 +197,8 @@ func TestMigrationSettings(t *testing.T) {
 		{Name: "probe", Kind: []string{"lib"}, Source: filepath.Join(root, "crates/probe/src/lib.rs")},
 		{Name: "integration", Kind: []string{"test"}, Source: filepath.Join(root, "crates/probe/tests/integration.rs")},
 	}}
+	put(t, root, "crates/probe/src/lib.rs", "")
+	put(t, root, "crates/probe/tests/integration.rs", "")
 	rules, err := generate(root, "crates/probe", pkg, opts)
 	if err != nil {
 		t.Fatal(err)
@@ -257,7 +259,7 @@ timeout = "long", # keep
 			if useCrate {
 				setAttr(fresh, "crate", ":probe")
 			} else {
-				setAttr(fresh, "srcs", librarySources("src/lib.rs"))
+				setAttr(fresh, "srcs", rule.ExprFromValue([]string{"src/lib.rs"}))
 				setAttr(fresh, "crate_root", "src/lib.rs")
 				setAttr(fresh, "crate_name", "probe_context")
 			}

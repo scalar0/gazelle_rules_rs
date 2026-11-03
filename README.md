@@ -97,9 +97,17 @@ Explicit benchmark labels use `<base>-benches/<target>`.
 Implicit library and binary benchmarks use `<target>-bench-test`.
 Additional library outputs use `<target>-<crate-type>`.
 
-Source globs include shared Rust modules below each target directory.
-Conventional library globs exclude `src/main.rs`.
-Bazel excludes files in nested Bazel packages from these globs.
+Each target lists its crate root and reachable Rust source files.
+Source discovery follows external modules, inline modules, literal `#[path]` attributes, and literal `include!` paths.
+It includes existing conditional branches, including `cfg_attr` paths, without using the host configuration.
+It excludes unrelated libraries, binaries, tests, examples, and build scripts.
+Source references must stay inside the Cargo package and cannot cross a nested Bazel package.
+Run Gazelle after a source reference changes.
+
+Source discovery does not expand macros or evaluate computed include paths.
+Build scripts supply generated files through their existing dependencies.
+For other computed source paths, set the complete target `srcs` attribute with Gazelle's `# keep` comment.
+Module path resolution follows the [Rust Reference](https://doc.rust-lang.org/reference/items/modules.html).
 Declare non-Rust inputs in Cargo metadata.
 Library inputs also include the Cargo README when present.
 
