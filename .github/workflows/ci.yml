@@ -10,6 +10,7 @@ concurrency:
   group: compatibility-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 env:
+  DO_NOT_TRACK: '1'
   ASPECT_WRAPPER_SKIP: '1'
   BAZELISK_SKIP_WRAPPER: '1'
 jobs:
@@ -33,6 +34,17 @@ jobs:
       - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b # v3
         with:
           just-version: '1.58.0'
+      - name: Install hook test dependencies
+        shell: bash
+        run: |
+          if ! command -v rg >/dev/null; then
+            if [[ "$RUNNER_OS" == "Linux" ]]; then
+              sudo apt-get update
+              sudo apt-get install --yes ripgrep
+            else
+              brew install ripgrep
+            fi
+          fi
       - name: Check source formats
         run: just fmt-check
       - name: Check Bazel and shell policies

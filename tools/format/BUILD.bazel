@@ -1,8 +1,45 @@
 load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
 
+config_setting(
+    name = "linux_x86_64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "linux_aarch64",
+    constraint_values = [
+        "@platforms//os:linux",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
+config_setting(
+    name = "osx_x86_64",
+    constraint_values = [
+        "@platforms//os:osx",
+        "@platforms//cpu:x86_64",
+    ],
+)
+
+config_setting(
+    name = "osx_aarch64",
+    constraint_values = [
+        "@platforms//os:osx",
+        "@platforms//cpu:aarch64",
+    ],
+)
+
 genrule(
     name = "taplo",
-    srcs = ["@taplo//file"],
+    srcs = select({
+        ":linux_aarch64": ["@taplo_linux_aarch64//file"],
+        ":linux_x86_64": ["@taplo_linux_x86_64//file"],
+        ":osx_aarch64": ["@taplo_darwin_aarch64//file"],
+        ":osx_x86_64": ["@taplo_darwin_x86_64//file"],
+    }),
     outs = ["taplo_bin"],
     cmd = "gunzip -c $< > $@",
     executable = True,

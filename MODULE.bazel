@@ -42,6 +42,4 @@ single_version_override(
     patches = ["//tools/lint:buildifier_prebuilt_runfiles.patch"],
 )
 
-format_tools = use_extension("@aspect_rules_lint//format:extensions.bzl", "tools", dev_dependency = True)
-format_tools.taplo()
-use_repo(format_tools, "taplo")
+include("//tools/format:tools.MODULE.bazel")

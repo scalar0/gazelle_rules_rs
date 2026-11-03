@@ -1,3 +1,5 @@
+export DO_NOT_TRACK := "1"
+
 # List the standalone repository commands.
 default:
     just --list
@@ -43,6 +45,7 @@ git-setup:
     bash tools/hooks/setup-hooks.bash
 
 # Test hook setup, Git inputs, message validation, and linked worktrees in temporary repositories.
+# Tests require Bash, Git, just, jq, Perl, and ripgrep.
 [group('git')]
 git-hooks-test:
     bash tools/hooks/test.bash
