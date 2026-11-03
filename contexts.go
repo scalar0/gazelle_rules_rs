@@ -430,8 +430,10 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 			if r.Kind() == "rust_doc_test" {
 				for _, dep := range context.Deps {
 					variant := strings.TrimPrefix(dep, "//"+rel+":")
-					if local := pkg.Contexts.Variants[variant]; local != nil && local.Kind == "lib" {
+					if local := pkg.Contexts.Variants[variant]; local != nil && (local.Kind == "lib" || local.Kind == "proc-macro") {
 						docCrates[condition] = rule.ExprFromValue(dep)
+						// The crate attribute already supplies this dependency.
+						deps[platform] = slices.DeleteFunc(slices.Clone(deps[platform]), func(label string) bool { return label == dep })
 					}
 				}
 			}

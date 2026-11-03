@@ -319,7 +319,7 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 				output.SetPrivateAttr("cargo_input_target", base)
 				rules = append(rules, output)
 			}
-			if target.Doctest && kind == "lib" {
+			if target.Doctest {
 				doc := newRule("rust_doc_test", base+"-doc-tests")
 				setAttr(doc, "crate", ":"+base)
 				setAttr(doc, "deps", deps([]string{"normal", "normal_dev"}))
