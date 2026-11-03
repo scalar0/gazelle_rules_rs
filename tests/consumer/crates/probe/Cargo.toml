@@ -1,26 +1,37 @@
 [package]
+edition = "2024"
 name = "probe"
 version = "0.1.0"
-edition = "2024"
 
 [lib]
-crate-type = ["rlib", "cdylib", "staticlib"]
+crate-type = [
+  "cdylib",
+  "rlib",
+  "staticlib",
+]
 
 [features]
-default = ["checked"]
 checked = []
+default = [
+  "checked",
+]
 
 [[bench]]
-name = "smoke"
 harness = false
+name = "smoke"
 
 [[example]]
+crate-type = [
+  "rlib",
+  "staticlib",
+]
 name = "ffi"
-crate-type = ["staticlib", "rlib"]
 
 [package.metadata.resources]
-files = ["resources/message.txt"]
+files = [
+  "resources/message.txt",
+]
 
 [dependencies]
 itoa = "=1.0.18"
-probe-macros = { path = "../macros" }
+probe-macros = {path = "../macros"}

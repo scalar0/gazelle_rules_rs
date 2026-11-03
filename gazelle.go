@@ -5,11 +5,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	bzl "github.com/bazelbuild/buildtools/build"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	bzl "github.com/bazelbuild/buildtools/build"
 
 	"github.com/bazel-contrib/bazel-gazelle/v2/config"
 	"github.com/bazel-contrib/bazel-gazelle/v2/errors"
@@ -130,6 +131,7 @@ func (e *extension) Configure(ctx context.Context, args config.ConfigureArgs) er
 	}
 	return nil
 }
+
 func kindMap() map[string]rule.KindInfo {
 	attrs := map[string]bool{}
 	for _, key := range []string{"srcs", "crate", "crate_root", "crate_name", "edition", "aliases", "deps", "lint_config", "crate_features", "compile_data", "data", "tests", "tags", "rustc_flags", "rustc_env", "build_script_env", "version", "pkg_name", "visibility", "target_compatible_with", "actual", "use_libtest_harness", "timeout", "testonly", "args", "rustdoc_flags"} {
@@ -161,8 +163,10 @@ func (e *extension) Kinds() []rule.KindInfo {
 	return result
 }
 
-var _ language.Generator = (*extension)(nil)
-var _ config.Configurer = (*extension)(nil)
+var (
+	_ language.Generator = (*extension)(nil)
+	_ config.Configurer  = (*extension)(nil)
+)
 
 func (e *extension) Generate(ctx context.Context, args language.GenerateArgs) (language.GenerateResult, error) {
 	if err := ctx.Err(); err != nil {
@@ -194,6 +198,7 @@ func (e *extension) Generate(ctx context.Context, args language.GenerateArgs) (l
 func reconcile(file *rule.File, rules []*rule.Rule) (language.GenerateResult, error) {
 	return reconcileKinds(file, rules, kindMap())
 }
+
 func reconcileKinds(file *rule.File, rules []*rule.Rule, kinds map[string]rule.KindInfo) (language.GenerateResult, error) {
 	result := language.GenerateResult{Gen: rules, Imports: make([]interface{}, len(rules))}
 	names := map[string]*rule.Rule{}
@@ -253,6 +258,7 @@ func clearDeletedAttrs(rules []*rule.Rule) {
 		}
 	}
 }
+
 func (e *extension) OnResolve(ctx context.Context) error {
 	clearDeletedAttrs(e.generated)
 	return ctx.Err()
@@ -342,6 +348,7 @@ func (e *extension) rulesRepository() string {
 	}
 	return e.cfg.RulesRepository
 }
+
 func (e *extension) cratesRepository() string {
 	if e.cfg.CratesRepository == "" {
 		return "crates"

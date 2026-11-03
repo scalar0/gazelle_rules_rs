@@ -1,0 +1,13 @@
+diff --git a/binary_runner.bash.template b/binary_runner.bash.template
+--- a/binary_runner.bash.template
++++ b/binary_runner.bash.template
+@@ -34,3 +34,9 @@ function resolve_runfile() {
++  candidate="$0.runfiles/${runfiles_path}"
++  if [[ -e "$candidate" ]]; then
++    realpath "$candidate"
++    return 0
++  fi
++
+   for manifest in \
+     "${RUNFILES_MANIFEST_FILE:-}" \
+     "$0.runfiles_manifest" \

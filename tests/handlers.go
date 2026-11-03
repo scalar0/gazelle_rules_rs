@@ -17,6 +17,7 @@ type fixtureHandler struct {
 func (h fixtureHandler) Spec() HandlerSpec {
 	return HandlerSpec{Namespace: h.name, Schema: json.RawMessage(`{"$schema":"https://json-schema.org/draft/2020-12/schema","type":"object","required":["value"],"additionalProperties":false,"properties":{"value":{"type":"string"}}}`), Kinds: []rule.KindInfo{{Name: "filegroup", MergeableAttrs: map[string]bool{"srcs": true}, NonEmptyAttrs: map[string]bool{"srcs": true}}}}
 }
+
 func (h fixtureHandler) Generate(_ context.Context, _ MetadataContext) (Contribution, error) {
 	return h.output, nil
 }

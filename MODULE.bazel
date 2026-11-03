@@ -30,3 +30,18 @@ register_toolchains(
     "@llvm//toolchain:all",
     dev_dependency = True,
 )
+
+# Development checks use the same tools as the source repository.
+bazel_dep(name = "aspect_rules_lint", version = "2.9.1", dev_dependency = True)
+bazel_dep(name = "buildifier_prebuilt", version = "10.1.0", dev_dependency = True)
+bazel_dep(name = "rules_shell", version = "0.8.0", dev_dependency = True)
+
+single_version_override(
+    module_name = "buildifier_prebuilt",
+    patch_strip = 1,
+    patches = ["//tools/lint:buildifier_prebuilt_runfiles.patch"],
+)
+
+format_tools = use_extension("@aspect_rules_lint//format:extensions.bzl", "tools", dev_dependency = True)
+format_tools.taplo()
+use_repo(format_tools, "taplo")

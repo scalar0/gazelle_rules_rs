@@ -1,10 +1,12 @@
 [workspace]
-members = ["crates/*"]
+members = [
+  "crates/*",
+]
 resolver = "3"
 
 [package]
+edition = "2024"
 name = "root-probe"
 version = "0.1.0"
-edition = "2024"
 [dependencies]
-probe = { path = "crates/probe" }
+probe = {path = "crates/probe"}

@@ -5,12 +5,13 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/bazelbuild/rules_go/go/runfiles"
-	"github.com/santhosh-tekuri/jsonschema/v6"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/bazelbuild/rules_go/go/runfiles"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 )
 
 // BackendConfig contains the consumer settings that Cargo does not provide.

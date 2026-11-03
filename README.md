@@ -162,7 +162,11 @@ This lets Gazelle remove the handler's stale rules with the registered merge pol
 ## Development and provenance
 
 The [Justfile](Justfile) defines development commands.
-The [CI workflow](.github/workflows/ci.yml) checks standalone tests and the independent consumer on four hosts.
+The [CI workflow](.github/workflows/ci.yml) uses Aspect for standalone tests, consumer generation checks, and consumer tests on four hosts.
+The [Aspect version file](.aspect/version.axl) pins the CLI for local and CI use.
+The extension owns the copied format, lint, maintenance, and Git hook configuration.
+CI also checks source formats, Bazel and shell policies, and Git hook behavior.
+The consumer shares the Aspect configuration through a relative symbolic link.
 The consumer uses renamed backend repositories, a registry dependency, resource metadata, and multiple Cargo target kinds.
 
 The code originated in `scalar0/kernel-toolchain` at commit `20971ec52ecdca2534c53171944ab4425cc09fc4`.

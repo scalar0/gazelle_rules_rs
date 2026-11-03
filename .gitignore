@@ -2,3 +2,5 @@
 /target/
 /tests/consumer/bazel-*
 /tests/consumer/target/
+/.aspect/generated/
+/.gitcommit

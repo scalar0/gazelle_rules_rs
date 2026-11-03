@@ -6,6 +6,7 @@ A public release requires successful CI results for all supported hosts and revi
 | Component | Pinned version |
 | --- | --- |
 | Bazel | 9.3.0 |
+| Aspect CLI | 2026.44.6 |
 | Gazelle | 2.0.0-beta.2 |
 | rules_rs | 0.2.1 |
 | rules_go | 0.65.0 |

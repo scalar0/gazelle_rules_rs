@@ -6,6 +6,7 @@ exports_files([
     "cargo.MODULE.bazel",
     "config.bzl",
     "configuration.schema.json",
+    ".shellcheckrc",
 ])
 
 exports_files(

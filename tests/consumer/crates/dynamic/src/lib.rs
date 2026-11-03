@@ -1,1 +1,3 @@
-pub fn answer() -> u32 { 42 }
+pub fn answer() -> u32 {
+    42
+}

@@ -105,6 +105,7 @@ type rulesMetadataHandler struct{}
 func (rulesMetadataHandler) Spec() HandlerSpec {
 	return HandlerSpec{Namespace: metadataNamespace, Schema: optionsSchema}
 }
+
 func (rulesMetadataHandler) Generate(_ context.Context, input MetadataContext) (Contribution, error) {
 	var defaults, local map[string]json.RawMessage
 	if err := json.Unmarshal(input.Workspace, &defaults); err != nil {

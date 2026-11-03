@@ -569,6 +569,7 @@ func targetKind(t cargoTarget) string {
 	}
 	return "lib"
 }
+
 func crateRuleKind(kind string) string {
 	switch kind {
 	case "lib", "rlib":

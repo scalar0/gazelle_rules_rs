@@ -1,0 +1,27 @@
+"""Configure Bazel and shell lint checks for the standalone extension."""
+
+load("@aspect//lint.axl", _lint = "lint")
+
+_ASPECTS = [
+    "//tools/lint:linters.bzl%buildifier",
+    "//tools/lint:linters.bzl%shellcheck",
+]
+
+lint_all = _lint.alias(
+    defaults = {
+        "aspects": _ASPECTS,
+        "base_ref": "HEAD",
+        "strategy": "hard",
+    },
+    summary = "Check all Bazel and shell policies.",
+)
+
+def configure(ctx):
+    """Set defaults for the built-in lint task.
+
+    Args:
+        ctx: The Aspect configuration context.
+    """
+    ctx.tasks["lint"].args.aspects = _ASPECTS
+    ctx.tasks["lint"].args.strategy = "hard"
+    ctx.tasks["lint"].args.base_ref = "HEAD"

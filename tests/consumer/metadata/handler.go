@@ -3,6 +3,7 @@ package metadata
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/bazel-contrib/bazel-gazelle/v2/language"
 	"github.com/bazel-contrib/bazel-gazelle/v2/rule"
 	rulesrs "github.com/scalar0/gazelle_rules_rs"
@@ -17,6 +18,7 @@ func (resources) Spec() rulesrs.HandlerSpec {
 		Kinds:     []rule.KindInfo{{Name: "filegroup", MergeableAttrs: map[string]bool{"srcs": true}, NonEmptyAttrs: map[string]bool{"srcs": true}}},
 	}
 }
+
 func (resources) Generate(_ context.Context, input rulesrs.MetadataContext) (rulesrs.Contribution, error) {
 	var config struct{ Files []string }
 	if err := json.Unmarshal(input.Package, &config); err != nil {
@@ -26,6 +28,7 @@ func (resources) Generate(_ context.Context, input rulesrs.MetadataContext) (rul
 	r.SetAttr("srcs", config.Files)
 	return rulesrs.Contribution{Rules: []*rule.Rule{r}, Inputs: []rulesrs.TargetInputs{{Target: "probe", CompileData: []string{":manifest_resources"}}}}, nil
 }
+
 func NewV2() language.Language {
 	result, err := rulesrs.New(resources{})
 	if err != nil {

@@ -1,1 +1,3 @@
-pub fn expected() -> u32 { 42 }
+pub fn expected() -> u32 {
+    42
+}
