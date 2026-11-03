@@ -15,14 +15,12 @@ func contextFixture(t *testing.T, root string) (map[string]cargoPackage, unitGra
 	for _, name := range []string{"a", "b"} {
 		rel := "crates/" + name
 		put(t, root, rel+"/Cargo.toml", "[package]\nname = '"+name+"'\n")
-		put(t, root, rel+"/src/lib.rs", "")
 		packages[rel] = cargoPackage{
 			ID: name, Name: name, Manifest: filepath.Join(root, rel, "Cargo.toml"),
 			Targets:  []cargoTarget{{Kind: []string{"lib"}, Source: filepath.Join(root, rel, "src/lib.rs")}},
 			Contexts: &packageContexts{Platforms: []string{platform}, Bindings: map[string]map[string]*contextTarget{}, Variants: map[string]*contextTarget{}},
 		}
 	}
-	put(t, root, "crates/b/build.rs", "")
 	b := packages["crates/b"]
 	b.Targets = append(b.Targets, cargoTarget{Kind: []string{"custom-build"}, Source: filepath.Join(root, "crates/b/build.rs")})
 	packages["crates/b"] = b
@@ -41,6 +39,7 @@ func TestCargoContextBindings(t *testing.T) {
 	if err := collectContexts(graph, "x86_64-unknown-linux-gnu", "build", packages, []string{"a", "b"}); err != nil {
 		t.Fatal(err)
 	}
+	compactContexts(packages)
 	a, b := packages["crates/a"], packages["crates/b"]
 	contextFeature := func(label string) string {
 		t.Helper()
@@ -69,7 +68,7 @@ func TestCargoContextBindings(t *testing.T) {
 		t.Fatal(err)
 	}
 	output := rendered(rules)
-	for _, want := range []string{"cargo_only = True", `label.startswith("@")`, "manual", `name = "b-build-script"`, build.Label} {
+	for _, want := range []string{"cargo_only = True", `label.startswith("@")`, `name = "b-build-script"`, build.Label} {
 		if !strings.Contains(output, want) {
 			t.Errorf("Missing context declaration %q in:\n%s", want, output)
 		}
@@ -84,6 +83,7 @@ func TestPublicLibrariesUseCargoContextIdentity(t *testing.T) {
 	if err := collectContexts(graph, platform, "build", packages, []string{"a", "b"}); err != nil {
 		t.Fatal(err)
 	}
+	compactContexts(packages)
 	for _, name := range []string{"a", "b"} {
 		rel := "crates/" + name
 		pkg := packages[rel]
@@ -101,8 +101,8 @@ func TestPublicLibrariesUseCargoContextIdentity(t *testing.T) {
 				continue
 			}
 			found = true
-			if r.Kind() != "alias" || r.AttrString("actual") != pkg.Contexts.Bindings[name][platform].Label {
-				t.Fatalf("Public library %s must use its Cargo unit instead of a second Rust compilation.", name)
+			if r.Kind() != "rust_library" || "//"+rel+":"+r.Name() != pkg.Contexts.Bindings[name][platform].Label {
+				t.Fatalf("Public library %s must compile its canonical Cargo context directly.", name)
 			}
 		}
 		if !found {
@@ -161,6 +161,96 @@ func TestInvalidCargoUnitGraphs(t *testing.T) {
 			}
 			if err := collectContexts(graph, "x86_64-unknown-linux-gnu", "build", packages, []string{"a", "b"}); err == nil {
 				t.Fatalf("Accepted invalid Cargo unit graph: %s", invalid)
+			}
+		})
+	}
+}
+
+func TestSingleContextUsesPublicTargets(t *testing.T) {
+	root := t.TempDir()
+	packages, graph := contextFixture(t, root)
+	for i := range graph.Units {
+		graph.Units[i].Features = nil
+	}
+	for rel, pkg := range packages {
+		pkg.Targets[0].Test = true
+		packages[rel] = pkg
+	}
+	if err := collectContexts(graph, "x86_64-unknown-linux-gnu", "build", packages, []string{"a", "b"}); err != nil {
+		t.Fatal(err)
+	}
+	compactContexts(packages)
+	for _, name := range []string{"a", "b"} {
+		rel := "crates/" + name
+		pkg := packages[rel]
+		rules, err := generate(root, rel, pkg, settings{})
+		if err == nil && pkg.Contexts != nil {
+			rules, err = generateContexts(rel, pkg, rules)
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		if rules[1].AttrString("crate") != ":"+name {
+			t.Fatal("An equivalent unit test must reuse its crate.")
+		}
+		output := rendered(rules)
+		if strings.Contains(output, "-cargo-") || strings.Contains(output, "alias(") || strings.Contains(output, "cargo_only") || strings.Contains(output, "label.startswith") {
+			t.Fatalf("A single context must use public compilation targets:\n%s", output)
+		}
+	}
+}
+
+func TestUnitContextReuse(t *testing.T) {
+	for _, change := range []string{"same", "extra dev dependency", "features", "dependency context", "missing platform"} {
+		t.Run(change, func(t *testing.T) {
+			root := t.TempDir()
+			packages, graph := contextFixture(t, root)
+			platform := "x86_64-unknown-linux-gnu"
+			if err := collectContexts(graph, platform, "build", packages, []string{"a", "b"}); err != nil {
+				t.Fatal(err)
+			}
+			pkg := packages["crates/b"]
+			pkg.Targets[0].Test = true
+			base := pkg.Contexts.Bindings["b"][platform]
+			unit := *base
+			unit.Template = "b-unit-tests"
+			unit.Label = "//crates/b:b-unit-tests-cargo-test"
+			unit.Deps = slices.Clone(base.Deps)
+			switch change {
+			case "extra dev dependency":
+				unit.Deps = append(unit.Deps, "//crates/dev:dev")
+			case "features":
+				unit.Features = []string{"test-only"}
+			case "dependency context":
+				unit.Deps[0] = "//crates/a:a-other"
+			}
+			pkg.Contexts.Bindings["b-unit-tests"] = map[string]*contextTarget{platform: &unit}
+			if change == "missing platform" {
+				delete(pkg.Contexts.Bindings["b"], platform)
+			}
+			packages["crates/b"] = pkg
+			compactContexts(packages)
+			pkg = packages["crates/b"]
+			rules, err := generate(root, "crates/b", pkg, settings{})
+			if err == nil {
+				rules, err = generateContexts("crates/b", pkg, rules)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			found := false
+			for _, r := range rules {
+				if r.Name() != "b-unit-tests" {
+					continue
+				}
+				found = true
+				reuse := change == "same" || change == "extra dev dependency"
+				if (r.AttrString("crate") == ":b") != reuse || (r.Attr("srcs") == nil) != reuse {
+					t.Fatalf("Incorrect test source form for %s:\n%s", change, rendered(rules))
+				}
+			}
+			if !found {
+				t.Fatal("The unit test is missing.")
 			}
 		})
 	}

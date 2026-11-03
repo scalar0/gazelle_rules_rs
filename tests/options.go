@@ -77,8 +77,6 @@ func TestCompilerInputInheritance(t *testing.T) {
 		UnitCompileData:    []string{"unit.json", "schema.json"},
 		TestCompileData:    []string{"test.json"},
 	}
-	put(t, root, rel+"/src/lib.rs", "")
-	put(t, root, rel+"/tests/roundtrip.rs", "")
 	rules, err := generate(root, rel, pkg, opts)
 	if err != nil {
 		t.Fatal(err)

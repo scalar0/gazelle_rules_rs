@@ -222,11 +222,9 @@ func reconcileKinds(file *rule.File, rules []*rule.Rule, kinds map[string]rule.K
 				return language.GenerateResult{}, fmt.Errorf("target %q conflicts with a handwritten rule", old.Name())
 			}
 			if fresh.Kind() == old.Kind() {
-				if old.Kind() == "rust_test" {
-					for _, key := range []string{"srcs", "crate", "crate_root", "crate_name"} {
-						if old.Attr(key) != nil && fresh.Attr(key) == nil {
-							fresh.SetAttr(key, generatedExpr{})
-						}
+				for key := range kinds[old.Kind()].MergeableAttrs {
+					if old.Attr(key) != nil && fresh.Attr(key) == nil {
+						fresh.SetAttr(key, generatedExpr{})
 					}
 				}
 				continue

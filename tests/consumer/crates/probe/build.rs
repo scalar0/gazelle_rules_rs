@@ -1,5 +1,3 @@
-mod build_support;
-
 fn main() {
-    build_support::configure();
+    println!("cargo:rustc-env=PROBE_BUILD=ready");
 }

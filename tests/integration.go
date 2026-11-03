@@ -159,7 +159,7 @@ func TestCargoGeneration(t *testing.T) {
 		t.Fatal("The generator retained a legacy test label.")
 	}
 	gazelle(0, "diff")
-	if !strings.Contains(read("crates/macros/BUILD.bazel"), "--extern=proc_macro") {
+	if output := read("crates/macros/BUILD.bazel"); !strings.Contains(output, "--extern=proc_macro") && !strings.Contains(output, `crate = ":macros"`) {
 		t.Fatal("Procedural macro unit tests need the proc_macro import.")
 	}
 	if strings.Contains(current, "default_visibility") || strings.Contains(current, "workspace_internal") {
@@ -435,8 +435,8 @@ func TestWorkspaceLayouts(t *testing.T) {
 			if layout == "root" {
 				name = "layout"
 			}
-			if !bytes.Contains(before, []byte("cargo_only = True")) {
-				t.Fatal("Configured workspaces need Cargo contexts without declared features.")
+			if bytes.Contains(before, []byte("-cargo-")) || bytes.Contains(before, []byte("alias(")) {
+				t.Fatal("Uniform configured workspaces must use public compilation targets.")
 			}
 			if !bytes.Contains(before, []byte(`name = "`+name+`"`)) {
 				t.Fatalf("Missing root target:\n%s", before)

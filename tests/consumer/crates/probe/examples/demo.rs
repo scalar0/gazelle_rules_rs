@@ -1,5 +1,3 @@
-include!("support/value.rs");
-
 fn main() {
-    assert_eq!(probe::answer(), expected());
+    assert_eq!(probe::answer(), 42);
 }

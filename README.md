@@ -97,25 +97,22 @@ Explicit benchmark labels use `<base>-benches/<target>`.
 Implicit library and binary benchmarks use `<target>-bench-test`.
 Additional library outputs use `<target>-<crate-type>`.
 
-Each target lists its crate root and reachable Rust source files.
-Source discovery follows external modules, inline modules, literal `#[path]` attributes, and literal `include!` paths.
-It includes existing conditional branches, including `cfg_attr` paths, without using the host configuration.
-It excludes unrelated libraries, binaries, tests, examples, and build scripts.
-Source references must stay inside the Cargo package and cannot cross a nested Bazel package.
-Run Gazelle after a source reference changes.
-
-Source discovery does not expand macros or evaluate computed include paths.
-Build scripts supply generated files through their existing dependencies.
-For other computed source paths, set the complete target `srcs` attribute with Gazelle's `# keep` comment.
-Module path resolution follows the [Rust Reference](https://doc.rust-lang.org/reference/items/modules.html).
+Libraries and binaries under `src/` use a compact `src/**/*.rs` glob that excludes `src/main.rs`.
+A target whose root falls outside that glob also lists its root explicitly.
+Other targets list their crate root without a directory-wide glob.
+For shared modules or custom source layouts, set the complete `srcs` attribute with Gazelle's `# keep` comment.
+The [consumer fixture](tests/consumer/crates/probe/BUILD.bazel) shows a test override for shared modules.
+Bazel excludes nested Bazel packages from globs.
 Declare non-Rust inputs in Cargo metadata.
 Library inputs also include the Cargo README when present.
 
-Cargo context labels use a content hash without absolute paths.
-Public library labels select compiled contexts through aliases.
-This preserves Rust type identity across local dependency edges.
-The generator removes backend-local aliases before it adds Cargo context aliases.
-This also avoids invalid backend labels for dependencies on the workspace-root package.
+Targets with one public Cargo configuration compile under their normal labels.
+Equivalent configurations use the standard backend dependency helpers.
+Compatible unit tests reuse their crate through the `crate` attribute.
+Additional configurations use content-hashed labels without absolute paths.
+Public aliases select between configurations only when supported platforms need different targets.
+All local edges use the same compiled target to preserve Rust type identity.
+Explicit context edges also handle dependencies on the workspace-root package.
 Required-feature conditions follow the selected Cargo unit graphs.
 External dependency resolution remains the responsibility of rules_rs.
 

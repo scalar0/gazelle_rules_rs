@@ -169,6 +169,7 @@ func readConfiguredContexts(ctx context.Context, root, tool string, packages map
 			}
 		}
 	}
+	compactContexts(packages)
 	return nil
 }
 
@@ -314,6 +315,115 @@ func collectContexts(graph unitGraph, platform, command string, packages map[str
 	return nil
 }
 
+// Give a uniform public binding its normal label before any package emits rules.
+// Rewrite all dependency edges together to preserve Rust type identity.
+func compactContexts(packages map[string]cargoPackage) {
+	replacements := map[string]string{}
+	public := map[string]bool{}
+	for rel, pkg := range packages {
+		contexts := pkg.Contexts
+		for name, bindings := range contexts.Bindings {
+			if len(bindings) != len(contexts.Platforms) {
+				continue
+			}
+			label := ""
+			uniform := true
+			for _, binding := range bindings {
+				if label != "" && label != binding.Label {
+					uniform = false
+					break
+				}
+				label = binding.Label
+			}
+			oldName := strings.TrimPrefix(label, "//"+rel+":")
+			variant := contexts.Variants[oldName]
+			if !uniform || variant == nil {
+				continue
+			}
+			replacement := "//" + rel + ":" + name
+			replacements[label] = replacement
+			public[replacement] = true
+			delete(contexts.Variants, oldName)
+			contexts.Variants[name] = variant
+		}
+	}
+	replace := func(label string) string {
+		if replacement, ok := replacements[label]; ok {
+			return replacement
+		}
+		return label
+	}
+	seen := map[*contextTarget]bool{}
+	rewrite := func(target *contextTarget) {
+		if seen[target] {
+			return
+		}
+		seen[target] = true
+		target.Label = replace(target.Label)
+		for i, dep := range target.Deps {
+			target.Deps[i] = replace(dep)
+		}
+		slices.Sort(target.Deps)
+		aliases := map[string]string{}
+		for label, name := range target.Aliases {
+			aliases[replace(label)] = name
+		}
+		target.Aliases = aliases
+		for name, label := range target.Binaries {
+			target.Binaries[name] = replace(label)
+		}
+	}
+	for _, pkg := range packages {
+		for _, variant := range pkg.Contexts.Variants {
+			rewrite(variant)
+		}
+		for _, bindings := range pkg.Contexts.Bindings {
+			for _, binding := range bindings {
+				rewrite(binding)
+			}
+		}
+	}
+	for rel, pkg := range packages {
+		// The backend assumes directory-name labels for local dependencies.
+		// Keep explicit edges for workspace-root dependencies and nested workspaces.
+		simple := pkg.WorkspaceRoot == packageRepoRoot(pkg)
+		for _, dep := range pkg.Dependencies {
+			if dep.Path != "" && dep.Path == packageRepoRoot(pkg) {
+				simple = false
+			}
+		}
+		for name, variant := range pkg.Contexts.Variants {
+			if name != variant.Template {
+				simple = false
+			}
+		}
+		for _, bindings := range pkg.Contexts.Bindings {
+			if len(bindings) != len(pkg.Contexts.Platforms) {
+				simple = false
+			}
+			for _, binding := range bindings {
+				if !slices.Equal(binding.Features, pkg.Features) {
+					simple = false
+				}
+				for _, dep := range binding.Deps {
+					if !public[dep] {
+						simple = false
+					}
+				}
+				for _, binary := range binding.Binaries {
+					if !public[binary] {
+						simple = false
+					}
+				}
+			}
+		}
+		if simple {
+			pkg.Contexts = nil
+			packages[rel] = pkg
+		}
+	}
+}
+
 func cloneContextRule(template *rule.Rule, name string) *rule.Rule {
 	r := newRule(template.Kind(), name)
 	for _, key := range []string{"cargo_template", "cargo_input_target", "cargo_dev"} {
@@ -401,12 +511,14 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 			if base == nil {
 				return nil, fmt.Errorf("context test %s has no source target", r.Name())
 			}
-			r.DelAttr("crate")
-			for _, attr := range []string{"srcs", "crate_root", "crate_name"} {
-				setAttr(r, attr, base.Attr(attr))
-			}
-			if base.Kind() == "rust_proc_macro" {
-				setAttr(r, "rustc_flags", rule.UnsortedStrings{"--extern=proc_macro"})
+			if !compatibleTestContext(pkg.Contexts, strings.TrimPrefix(crate, ":"), bindingName) {
+				r.DelAttr("crate")
+				for _, attr := range []string{"srcs", "crate_root", "crate_name"} {
+					setAttr(r, attr, base.Attr(attr))
+				}
+				if base.Kind() == "rust_proc_macro" {
+					setAttr(r, "rustc_flags", rule.UnsortedStrings{"--extern=proc_macro"})
+				}
 			}
 		}
 		features, deps, compatible := map[string][]string{}, map[string][]string{}, map[string][]string{}
@@ -440,7 +552,7 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 			environments[condition], runtimeData[condition] = runtimeInputs(pkg, context.Binaries)
 			hasBinaries = hasBinaries || len(context.Binaries) != 0
 		}
-		if r.Kind() == "cargo_build_script" || r.Kind() == "rust_proc_macro" || (r.Kind() == "rust_library" && template.PrivateAttr("cargo_template") == nil) {
+		if (r.Kind() == "cargo_build_script" || r.Kind() == "rust_proc_macro" || (r.Kind() == "rust_library" && template.PrivateAttr("cargo_template") == nil)) && !publicContext(rel, r.Name(), bindings) {
 			r = newRule("alias", r.Name())
 			setAttr(r, "actual", expressionSelect(actual))
 		} else {
@@ -473,6 +585,9 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 	slices.Sort(variants)
 	for _, name := range variants {
 		context := pkg.Contexts.Variants[name]
+		if name == context.Template {
+			continue
+		}
 		template := byName[context.Template]
 		if template == nil {
 			return nil, fmt.Errorf("Cargo context %s has no target template in %s", context.Template, rel)
@@ -489,4 +604,34 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 		result = append(result, r)
 	}
 	return result, nil
+}
+
+func publicContext(rel, name string, bindings map[string]*contextTarget) bool {
+	for _, binding := range bindings {
+		if binding.Label != "//"+rel+":"+name {
+			return false
+		}
+	}
+	return len(bindings) != 0
+}
+
+// A crate-based test inherits its crate's features, dependencies, and aliases.
+func compatibleTestContext(contexts *packageContexts, crate, test string) bool {
+	for _, platform := range contexts.Platforms {
+		base, unit := contexts.Bindings[crate][platform], contexts.Bindings[test][platform]
+		if base == nil || unit == nil || !slices.Equal(base.Features, unit.Features) {
+			return false
+		}
+		for _, dep := range base.Deps {
+			if !slices.Contains(unit.Deps, dep) {
+				return false
+			}
+		}
+		for label, name := range base.Aliases {
+			if unit.Aliases[label] != name {
+				return false
+			}
+		}
+	}
+	return true
 }
