@@ -1,0 +1,57 @@
+[package]
+description.workspace = true
+edition.workspace = true
+name = "probe"
+readme = "README.md"
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+renamed = {package = "normal-support", path = "../normal"}
+
+[dev-dependencies]
+dev-support = {path = "../dev"}
+
+[build-dependencies]
+build-support = {path = "../build-support"}
+
+[features]
+default = [
+  "enabled",
+]
+enabled = []
+
+[lints]
+workspace = true
+
+[[test]]
+edition = "2021"
+name = "check"
+
+[[test]]
+harness = false
+name = "custom"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+macro-support = {features = [
+  "linux-only",
+], path = "../macros"}
+renamed = {features = [
+  "linux-only",
+], package = "normal-support", path = "../normal"}
+
+[package.metadata.schemas.contract]
+source = "probe.schema.json"
+types = true
+validator = true
+
+[package.metadata.rules_rs.build_inputs.PROBE_INPUT]
+bazel_label = "//:vendor-input.txt"
+cargo_path = "vendor-input.txt"
+
+[package.metadata.rules_rs]
+build_data = [
+  "//:Cargo.toml",
+  "//schemas:probe.schema.json",
+  "Cargo.toml",
+]

@@ -1,0 +1,34 @@
+# Cargo supplies the public unit graph. Rust compilation keeps the root toolchain.
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "gazelle_cargo_linux_amd64",
+    build_file_content = 'exports_files(["cargo/bin/cargo"], visibility = ["//visibility:public"])',
+    sha256 = "47c41adfd677ef69150cad23aa1affa47eecc85becf46a442e22cba3e49659b8",
+    strip_prefix = "cargo-nightly-x86_64-unknown-linux-gnu",
+    urls = ["https://static.rust-lang.org/dist/2026-11-01/cargo-nightly-x86_64-unknown-linux-gnu.tar.xz"],
+)
+
+http_archive(
+    name = "gazelle_cargo_linux_arm64",
+    build_file_content = 'exports_files(["cargo/bin/cargo"], visibility = ["//visibility:public"])',
+    sha256 = "9dac1fb3b8544e265a17c130ebc056829f1bebddaefe3be72d58529f2c3196b3",
+    strip_prefix = "cargo-nightly-aarch64-unknown-linux-gnu",
+    urls = ["https://static.rust-lang.org/dist/2026-11-01/cargo-nightly-aarch64-unknown-linux-gnu.tar.xz"],
+)
+
+http_archive(
+    name = "gazelle_cargo_darwin_amd64",
+    build_file_content = 'exports_files(["cargo/bin/cargo"], visibility = ["//visibility:public"])',
+    sha256 = "9775442c7c4f0dd80e8ef5acc2117d215381df8614df0afb9388d7f0462e66ea",
+    strip_prefix = "cargo-nightly-x86_64-apple-darwin",
+    urls = ["https://static.rust-lang.org/dist/2026-11-01/cargo-nightly-x86_64-apple-darwin.tar.xz"],
+)
+
+http_archive(
+    name = "gazelle_cargo_darwin_arm64",
+    build_file_content = 'exports_files(["cargo/bin/cargo"], visibility = ["//visibility:public"])',
+    sha256 = "23e274e791c1384f07d0e16959dbd9ac0fa7f491c6db42437173a4191c2d9833",
+    strip_prefix = "cargo-nightly-aarch64-apple-darwin",
+    urls = ["https://static.rust-lang.org/dist/2026-11-01/cargo-nightly-aarch64-apple-darwin.tar.xz"],
+)

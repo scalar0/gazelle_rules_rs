@@ -1,0 +1,8 @@
+[package]
+edition.workspace = true
+name = "build-support"
+rust-version.workspace = true
+version.workspace = true
+
+[lints]
+workspace = true

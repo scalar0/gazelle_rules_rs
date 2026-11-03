@@ -1,0 +1,82 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Rust Gazelle manifest metadata",
+    "description": "Use this object in package.metadata.rules_rs or workspace.metadata.rules_rs. Package fields replace workspace defaults, including empty lists and maps.",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "library_compile_data": {
+            "$ref": "#/$defs/inputs",
+            "description": "Extra library and binary compiler inputs. Cargo's package.readme is automatic."
+        },
+        "unit_compile_data": {
+            "$ref": "#/$defs/inputs",
+            "description": "Extra unit-test compiler inputs. Unit tests also inherit library compiler inputs."
+        },
+        "test_compile_data": {
+            "$ref": "#/$defs/inputs",
+            "description": "Extra integration-test compiler inputs. Cargo's package.readme is automatic."
+        },
+        "test_data": {
+            "$ref": "#/$defs/inputs",
+            "description": "Integration-test runtime inputs. Generated binary runfiles are automatic."
+        },
+        "build_compile_data": {
+            "$ref": "#/$defs/inputs",
+            "description": "Compiler inputs for the build script."
+        },
+        "build_data": {
+            "$ref": "#/$defs/inputs",
+            "description": "Build-script runtime inputs. Labels from build_inputs are automatic."
+        },
+        "test_timeout": {
+            "type": "string",
+            "enum": ["short", "moderate", "long", "eternal"],
+            "description": "Bazel timeout for integration tests."
+        },
+        "testonly": {
+            "type": "boolean",
+            "description": "Set testonly on all generated targets."
+        },
+        "dep_override": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["prefix", "target"],
+            "description": "Replace dependency and alias labels that start with the repository prefix.",
+            "properties": {
+                "prefix": {"type": "string", "pattern": "^@[^\\s]+$"},
+                "target": {"type": "string", "pattern": "^//[^\\s]+$"}
+            }
+        },
+        "build_inputs": {
+            "type": "object",
+            "description": "Map environment variable names to build-script files. Cargo keeps environment overrides. Conflicting workspace-wide mappings cause an error.",
+            "propertyNames": {"pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+            "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["cargo_path", "bazel_label"],
+                "properties": {
+                    "cargo_path": {
+                        "type": "string",
+                        "minLength": 1,
+                        "pattern": "^[ -~]+$",
+                        "description": "A clean repository-relative file path. Do not use absolute paths, parent traversal, or backslashes. Generation does not require the file to exist."
+                    },
+                    "bazel_label": {
+                        "type": "string",
+                        "pattern": "^(//|@[^\\s/]+//|:)[^\\s*?\\[\\]]+$",
+                        "description": "A Bazel label for one file. The generator adds the label to build-script data and uses execpath."
+                    }
+                }
+            }
+        }
+    },
+    "$defs": {
+        "inputs": {
+            "type": "array",
+            "description": "Bazel labels, package-relative file paths, or package-relative glob patterns. Entries retain their existing Bazel meaning.",
+            "items": {"type": "string", "minLength": 1}
+        }
+    }
+}

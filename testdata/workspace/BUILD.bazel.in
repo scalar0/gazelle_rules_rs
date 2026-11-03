@@ -1,0 +1,10 @@
+package_group(
+    name = "workspace_internal",
+    packages = ["//..."],
+)
+
+exports_files([
+    "Cargo.toml",
+    "Cargo.lock",
+    "vendor-input.txt",
+])

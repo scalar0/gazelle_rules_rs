@@ -1,0 +1,162 @@
+load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+load(":rustc.bzl", "rustc_runfiles")
+
+exports_files([
+    "cargo.MODULE.bazel",
+])
+
+exports_files(
+    ["metadata.schema.json"],
+    visibility = ["//.cargo:__pkg__"],
+)
+
+config_setting(
+    name = "linux_amd64",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:linux",
+    ],
+)
+
+config_setting(
+    name = "linux_arm64",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:linux",
+    ],
+)
+
+config_setting(
+    name = "darwin_amd64",
+    constraint_values = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:osx",
+    ],
+)
+
+config_setting(
+    name = "darwin_arm64",
+    constraint_values = [
+        "@platforms//cpu:aarch64",
+        "@platforms//os:osx",
+    ],
+)
+
+filegroup(
+    name = "cargo",
+    srcs = select({
+        ":darwin_amd64": ["@gazelle_cargo_darwin_amd64//:cargo/bin/cargo"],
+        ":darwin_arm64": ["@gazelle_cargo_darwin_arm64//:cargo/bin/cargo"],
+        ":linux_amd64": ["@gazelle_cargo_linux_amd64//:cargo/bin/cargo"],
+        ":linux_arm64": ["@gazelle_cargo_linux_arm64//:cargo/bin/cargo"],
+    }),
+)
+
+rustc_runfiles(name = "rustc")
+
+filegroup(
+    name = "rustc_sysroot",
+    srcs = [":rustc"],
+    output_group = "sysroot",
+)
+
+go_library(
+    name = "rules_rs",
+    srcs = [
+        "contexts.go",
+        "gazelle.go",
+        "generate.go",
+        "lints.go",
+        "metadata.go",
+        "options.go",
+        "platforms.go",
+        "vendor_config.go",
+    ],
+    data = [
+        ":cargo",
+        ":rustc",
+    ],
+    embedsrcs = ["metadata.schema.json"],
+    importpath = "kernel-toolchain/tools/gazelle/rust",
+    deps = [
+        "@com_github_bazelbuild_buildtools//build",
+        "@com_github_pelletier_go_toml_v2//:go-toml",
+        "@com_github_santhosh_tekuri_jsonschema_v6//:jsonschema",
+        "@gazelle//config",
+        "@gazelle//label",
+        "@gazelle//language",
+        "@gazelle//repo",
+        "@gazelle//resolve",
+        "@gazelle//rule",
+        "@rules_go//go/runfiles",
+    ],
+)
+
+go_binary(
+    name = "vendor-config",
+    srcs = ["vendor-config/main.go"],
+    data = [
+        ":cargo",
+        ":rustc",
+    ],
+    deps = [":rules_rs"],
+)
+
+gazelle_binary(
+    name = "gazelle_binary",
+    languages = [":rules_rs"],
+)
+
+gazelle(
+    name = "gazelle",
+    gazelle = ":gazelle_binary",
+)
+
+go_test(
+    name = "rules_rs_test",
+    srcs = [
+        "tests/contexts.go",
+        "tests/generate.go",
+        "tests/options.go",
+        "tests/platforms.go",
+        "tests/reconcile.go",
+        "tests/vendor_config.go",
+    ],
+    embed = [":rules_rs"],
+    deps = [
+        "@gazelle//merger",
+        "@gazelle//rule",
+    ],
+)
+
+# Cargo uses the registered Rust compiler to read target configuration.
+go_test(
+    name = "rules_rs_integration_test",
+    srcs = [
+        "tests/cargo_vendor.go",
+        "tests/integration.go",
+    ],
+    args = [
+        "-gazelle=$(rlocationpath :gazelle_binary)",
+        "-fixture=$(rlocationpath testdata/workspace/Cargo.toml)",
+        "-cargo=$(rlocationpath :cargo)",
+        "-rustc=$(rlocationpath :rustc)",
+        "-sysroot=$(rlocationpath :rustc_sysroot)",
+        "-vendor-config=$(rlocationpath :vendor-config)",
+    ],
+    data = [
+        ":cargo",
+        ":gazelle_binary",
+        ":rustc",
+        ":rustc_sysroot",
+        ":vendor-config",
+    ] + glob(["testdata/workspace/**"]),
+    deps = ["@rules_go//go/runfiles"],
+)
+
+filegroup(
+    name = "rust_fixture_sources",
+    srcs = glob(["testdata/**/*.rs"]),
+    tags = ["lint-with-rust"],
+)

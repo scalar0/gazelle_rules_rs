@@ -1,0 +1,14 @@
+[package]
+edition.workspace = true
+name = "macro-support"
+rust-version.workspace = true
+version.workspace = true
+
+[lib]
+proc-macro = true
+
+[features]
+linux-only = []
+
+[lints]
+workspace = true

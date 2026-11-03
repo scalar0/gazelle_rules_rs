@@ -1,0 +1,18 @@
+[package]
+edition.workspace = true
+name = "normal-support"
+rust-version.workspace = true
+version.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+host-only = []
+linux-only = []
+
+[[bin]]
+name = "feature-tool"
+required-features = [
+  "linux-only",
+]

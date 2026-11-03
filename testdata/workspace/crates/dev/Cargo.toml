@@ -1,0 +1,11 @@
+[package]
+edition.workspace = true
+name = "dev-support"
+rust-version.workspace = true
+version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+probe = {path = "../probe"}
