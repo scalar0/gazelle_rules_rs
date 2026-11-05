@@ -35,6 +35,7 @@ type settings struct {
 	TestTimeout        string                `json:"test_timeout"`
 	TestOnly           *bool                 `json:"testonly"`
 	DepOverride        *dependencyOverride   `json:"dep_override"`
+	DepOverrides       []dependencyOverride  `json:"dep_overrides"`
 	BuildInputs        map[string]buildInput `json:"build_inputs"`
 }
 

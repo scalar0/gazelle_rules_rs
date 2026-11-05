@@ -42,11 +42,16 @@ type cargoPackage struct {
 	RepoRoot          string              `json:"-"`
 	WorkspaceRoot     string              `json:"-"`
 	Dependencies      []cargoDependency   `json:"dependencies"`
+	Standalone        bool                `json:"-"`
+	StandaloneLints   []string            `json:"-"`
+	LocalContexts     map[string]string   `json:"-"`
 }
 
 type cargoDependency struct {
-	Path string `json:"path"`
-	Kind string `json:"kind"`
+	Path   string `json:"path"`
+	Kind   string `json:"kind"`
+	Name   string `json:"name"`
+	Rename string `json:"rename"`
 }
 
 type cargoTarget struct {
@@ -287,6 +292,9 @@ func readConfiguredMetadata(ctx context.Context, root, scope string, cfg Backend
 		workspace = data.Root
 	}
 	if err := readConfiguredContexts(ctx, workspace, tool, result, data.Members, platforms); err != nil {
+		return nil, err
+	}
+	if err := readStandalonePackages(ctx, root, workspace, scope, tool, cfg, result); err != nil {
 		return nil, err
 	}
 	return result, nil

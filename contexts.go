@@ -178,8 +178,12 @@ func collectContexts(graph unitGraph, platform, command string, packages map[str
 		return fmt.Errorf("Cargo unit graph version %d is not supported", graph.Version)
 	}
 	locations := map[string]string{}
+	localContexts := map[string]string{}
 	for rel, pkg := range packages {
 		locations[pkg.ID] = rel
+		for id, label := range pkg.LocalContexts {
+			localContexts[id] = label
+		}
 	}
 	for _, unit := range graph.Units {
 		for _, dep := range unit.Dependencies {
@@ -215,6 +219,9 @@ func collectContexts(graph unitGraph, platform, command string, packages map[str
 		unit := graph.Units[index]
 		rel, scoped := locations[unit.Package]
 		if !scoped {
+			if label, exists := localContexts[unit.Package]; exists {
+				return &contextTarget{Label: label, Kind: targetKind(unit.Target)}, nil
+			}
 			if slices.Contains(members, unit.Package) {
 				return nil, fmt.Errorf("Cargo context dependency %s is outside the configured generation scope", unit.Package)
 			}

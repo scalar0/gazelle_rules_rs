@@ -48,6 +48,11 @@
                 "target": {"type": "string", "pattern": "^//[^\\s]+$"}
             }
         },
+        "dep_overrides": {
+            "type": "array",
+            "description": "Apply dependency and alias replacements in declaration order.",
+            "items": {"$ref": "#/properties/dep_override"}
+        },
         "build_inputs": {
             "type": "object",
             "description": "Map environment variable names to build-script files. Cargo keeps environment overrides. Conflicting workspace-wide mappings cause an error.",

@@ -86,6 +86,7 @@ go_library(
         "metadata.go",
         "options.go",
         "platforms.go",
+        "standalone.go",
         "vendor_config.go",
         ":tool_paths",
     ],
@@ -143,6 +144,7 @@ go_test(
         "tests/options.go",
         "tests/platforms.go",
         "tests/reconcile.go",
+        "tests/standalone.go",
         "tests/vendor_config.go",
     ],
     embed = [":rules_rs"],
@@ -158,6 +160,7 @@ go_test(
     srcs = [
         "tests/cargo_vendor.go",
         "tests/integration.go",
+        "tests/standalone_integration.go",
     ],
     args = [
         "-gazelle=$(rlocationpath :gazelle_binary)",

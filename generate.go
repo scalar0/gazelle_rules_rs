@@ -479,8 +479,12 @@ func applySettings(rules []*rule.Rule, opts settings) {
 		if opts.TestOnly != nil {
 			setAttr(r, "testonly", *opts.TestOnly)
 		}
+		overrides := slices.Clone(opts.DepOverrides)
 		if opts.DepOverride != nil {
-			override := []string{opts.DepOverride.Prefix, opts.DepOverride.Target}
+			overrides = append([]dependencyOverride{*opts.DepOverride}, overrides...)
+		}
+		for _, replacement := range overrides {
+			override := []string{replacement.Prefix, replacement.Target}
 			if value := r.Attr("deps"); value != nil {
 				setAttr(r, "deps", overrideDependencies(value, override))
 			}

@@ -12,18 +12,18 @@ Configured consumers use unit graphs even when packages declare no features.
 A pinned nightly Cargo supplies the unstable unit-graph interface.
 The consumer selects the Rust compiler through its registered Bazel toolchain.
 
-| Input | Output |
-| --- | --- |
-| Libraries | `rust_library`, `rust_proc_macro`, and requested library output types |
-| Binaries | `rust_binary` |
-| Build scripts | `cargo_build_script` |
-| Tests | Unit tests, integration tests, and integration test suites |
-| Examples | Binaries or requested library output types |
-| Benchmarks | Manual `rust_test` targets with `--bench` |
-| Doctests | `rust_doc_test` from the public rules_rust API |
-| Cargo unit graphs | Context-specific local dependencies and features |
-| Public crate helpers | External dependencies, aliases, crate names, editions, and lints |
-| Metadata handlers | Additional rules, resource inputs, and environment values |
+| Input                | Output                                                                |
+| -------------------- | --------------------------------------------------------------------- |
+| Libraries            | `rust_library`, `rust_proc_macro`, and requested library output types |
+| Binaries             | `rust_binary`                                                         |
+| Build scripts        | `cargo_build_script`                                                  |
+| Tests                | Unit tests, integration tests, and integration test suites            |
+| Examples             | Binaries or requested library output types                            |
+| Benchmarks           | Manual `rust_test` targets with `--bench`                             |
+| Doctests             | `rust_doc_test` from the public rules_rust API                        |
+| Cargo unit graphs    | Context-specific local dependencies and features                      |
+| Public crate helpers | External dependencies, aliases, crate names, editions, and lints      |
+| Metadata handlers    | Additional rules, resource inputs, and environment values             |
 
 ## Consumer setup
 
@@ -70,6 +70,12 @@ The selected Cargo workspace can be at the repository root or in a subdirectory.
 Workspace members can use different directory depths inside the repository.
 Standard Gazelle update, fix, and diff modes apply.
 Run recursively over all selected workspace members so that dependency labels have corresponding generated rules.
+
+The extension also reads excluded packages from workspace member and exclusion paths.
+Each excluded package must have its own Cargo lock.
+It uses literal package metadata and local dependency labels instead of workspace lookup functions.
+Direct dependencies must use paths inside the repository.
+Standalone registry dependencies need a separate crate repository and currently cause an explicit error.
 
 The legacy `-rules_rs_crate_scope` flag remains available for existing consumers.
 It restricts generation to immediate children of comma-separated directories.
@@ -123,6 +129,11 @@ Use `[package.metadata.rules_rs]` for package values.
 An explicit package field replaces its workspace default, including an empty list or map.
 The [metadata schema](metadata.schema.json) defines fields and validation rules.
 Unknown fields in this namespace cause an error.
+
+The `dep_overrides` array maps external dependency label prefixes to local labels.
+Use these mappings when a workspace member depends on an excluded local package.
+This keeps one compiled Rust type identity for each local package.
+The existing `dep_override` field remains available for a single mapping.
 
 ```toml
 [package.metadata.rules_rs]
