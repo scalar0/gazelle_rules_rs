@@ -1,0 +1,7 @@
+[package]
+edition.workspace = true
+name = "root-user"
+version.workspace = true
+
+[dependencies]
+root-probe = {path = "../.."}

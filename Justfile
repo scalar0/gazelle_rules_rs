@@ -4,30 +4,41 @@ export DO_NOT_TRACK := "1"
 default:
     just --list
 
-# Run the extension tests without parent workspace configuration or remote services.
+# Include internal Go packages and the lint launcher after the source layout change.
+# Run tests without parent workspace configuration or remote services.
 test:
     aspect --ignore_all_rc_files test \
-    //:rules_rs_test \
-    //:rules_rs_integration_test \
+    //src/... \
+    //tools/lint:golangci_test \
     --remote_cache= --remote_executor= --bes_backend= \
     --test_output=errors
 
-# Check generation and build Rust targets through an external module dependency.
-[working-directory("tests/consumer")]
+# Stage shared fixture inputs so both suites test the same Cargo source files.
+# Generate rules before checking their stability and compiling every consumer target.
 consumer-test:
-    aspect --ignore_all_rc_files gazelle \
-    --remote_cache= --remote_executor= --bes_backend= .
-    aspect --ignore_all_rc_files test \
-    //... \
-    //:root-probe-bench-test \
-    //crates/root-user:root-user-bench-test \
-    //crates/probe:probe-benches/smoke \
-    //crates/probe:probe-bench-test \
-    //crates/probe:probe-bin-bench-test \
-    //crates/macros:macros-bench-test \
-    //crates/dynamic:dynamic-bench-test \
-    --remote_cache= --remote_executor= --bes_backend= \
-    --test_output=errors
+    #!/usr/bin/env bash
+    set -euo pipefail
+    fixture_root="$(mktemp -d "${TMPDIR:-/tmp}/gazelle-rust-consumer.XXXXXX")"
+    trap 'rm -rf -- "$fixture_root"' EXIT
+    aspect --ignore_all_rc_files run //:consumer-test \
+        --remote_cache= --remote_executor= --bes_backend= \
+        -- --destination="$fixture_root" --extension-root="{{ justfile_directory() }}"
+    for fixture in owned upstream; do
+        (
+            cd "$fixture_root/$fixture"
+            aspect --ignore_all_rc_files run //:gazelle \
+                --remote_cache= --remote_executor= --bes_backend= -- -mode=fix .
+            aspect --ignore_all_rc_files run //:gazelle \
+                --remote_cache= --remote_executor= --bes_backend= -- -mode=diff .
+            aspect --ignore_all_rc_files test //... //:benchmarks \
+                --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+        )
+    done
+
+# Check Go BUILD rules with the official Go extension after source or dependency changes.
+go-check:
+    aspect --ignore_all_rc_files run //:gazelle_go \
+    --remote_cache= --remote_executor= --bes_backend=
 
 # Format source files through the same Aspect task used by Git hooks.
 fmt:
@@ -39,12 +50,13 @@ fmt-check:
     aspect format-check
     just --fmt --check --unstable
 
-# Check all declared Bazel and shell targets.
+# Check Bazel, shell, and Go policies through the same tools used by CI.
 lint:
     aspect lint-all //...
+    aspect lint-go
 
 # Check generation, format, lint, tests, and hook behavior before a push.
-check-push: fmt-check lint test consumer-test git-hooks-test
+check-push: go-check fmt-check lint test consumer-test git-hooks-test
 
 # Generate adapters from root recipes tagged with group('hooks'). Recipe names become Git hook names.
 # Git stores adapters in its shared hooks directory, normally .git/hooks.
@@ -92,7 +104,7 @@ commit-msg file: (git-commit-msg file)
 post-commit:
     rm -f -- "{{ justfile_directory() / '.gitcommit' }}"
 
-# Reject format failures before a commit. Report Bazel lint failures without blocking the commit.
+# Reject format failures before a commit. Report lint failures without blocking the commit.
 # Check the full current checkout, including unstaged changes.
 [group('hooks')]
 [no-exit-message]
@@ -108,6 +120,8 @@ pre-merge-commit: pre-commit
 _commit-lint:
     aspect lint-all --strategy=soft //... \
     || { status=$?; printf 'Warning: Lint checks failed with exit code %s. The commit can continue.\n' "$status" >&2; }
+    aspect lint-go \
+    || { status=$?; printf 'Warning: Go lint failed with exit code %s. The commit can continue.\n' "$status" >&2; }
 
 # Check generation, format, lint, extension tests, consumer tests, and hook tests before a push.
 # Git supplies the remote name, location, and reference data on `stdin`.

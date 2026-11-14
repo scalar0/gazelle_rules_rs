@@ -1,0 +1,36 @@
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "rules_rs_manifest_fixture",
+    build_file_content = """
+exports_files(["Cargo.toml", "Cargo.lock"])
+filegroup(
+    name = "sources",
+    srcs = glob(["**"], exclude = ["BUILD.bazel", "MODULE.bazel"]),
+    visibility = ["//visibility:public"],
+)
+""",
+    dev_dependency = True,
+    integrity = "sha256-AaI4L4R0K329zEyhJ1Cwc80eVo5uiWs2H4G9ozrEkt8=",
+    patch_args = ["-p1"],
+    patches = ["//:testdata/patches/manifest-workspace.patch"],
+    strip_prefix = "rules_rs-0.2.4/test/cargo_manifest_path_env",
+    urls = ["https://github.com/hermeticbuild/rules_rs/releases/download/v0.2.4/rules_rs-v0.2.4.tar.gz"],
+)
+
+http_archive(
+    name = "fixture_itoa",
+    build_file_content = """
+exports_files(["Cargo.toml"])
+filegroup(
+    name = "sources",
+    srcs = glob(["**", ".*"], exclude = ["BUILD.bazel"]),
+    visibility = ["//visibility:public"],
+)
+""",
+    dev_dependency = True,
+    sha256 = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682",
+    strip_prefix = "itoa-1.0.18",
+    type = "tar.gz",
+    urls = ["https://static.crates.io/crates/itoa/itoa-1.0.18.crate"],
+)

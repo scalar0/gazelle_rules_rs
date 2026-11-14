@@ -1,7 +1,6 @@
-"""Keep the independent consumer outside this module's target searches."""
+"""Exclude generated files from target searches."""
 
 ignore_directories([
-    "tests/consumer",
     "**/bazel-*",
     "**/target",
     "**/node_modules",

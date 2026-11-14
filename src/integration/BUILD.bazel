@@ -1,0 +1,41 @@
+load("@rules_go//go:def.bzl", "go_test")
+
+go_test(
+    name = "integration_test",
+    srcs = [
+        "cargo_vendor_test.go",
+        "integration_test.go",
+        "standalone_integration_test.go",
+    ],
+    args = [
+        "-backend-config=$(rlocationpath //:testdata/workspace/backend.json)",
+        "-gazelle=$(rlocationpath //:integration_runner)",
+        "-fixture=$(rlocationpath //:testdata/workspace/Cargo.toml)",
+        "-upstream-fixture=$(rlocationpath @rules_rs_manifest_fixture//:Cargo.toml)",
+        "-vendor-fixture=$(rlocationpath @fixture_itoa//:Cargo.toml)",
+        "-cargo=$(rlocationpath //:cargo)",
+        "-rustc=$(rlocationpath //:rustc)",
+        "-sysroot=$(rlocationpath //:rustc_sysroot)",
+        "-vendor-config=$(rlocationpath //:vendor-config)",
+    ],
+    data = [
+        "//:cargo",
+        "//:fixture_sources",
+        "//:integration_runner",
+        "//:rustc",
+        "//:rustc_sysroot",
+        "//:testdata/workspace/Cargo.toml",
+        "//:testdata/workspace/backend.json",
+        "//:vendor-config",
+        "@fixture_itoa//:Cargo.toml",
+        "@fixture_itoa//:sources",
+        "@rules_rs_manifest_fixture//:Cargo.toml",
+        "@rules_rs_manifest_fixture//:sources",
+    ],
+    visibility = ["//:__pkg__"],  # keep
+    deps = [
+        "//src/internal/testfixture",
+        "@gazelle//v2/testtools",
+        "@rules_go//go/runfiles",
+    ],
+)

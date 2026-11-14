@@ -911,9 +911,19 @@
     "@@gazelle+//:extensions.bzl%go_deps": {
       "required_mod_files_v1": [
         {
+          "importpath": "github.com/bazel-contrib/bazel-gazelle/v2",
+          "sha256": "07bf6292ce307261f66bba080ce021f635c56e8d9cbf6cfac46548d6d41b4ea2",
+          "version": "v2.0.0-beta.2"
+        },
+        {
           "importpath": "github.com/bazelbuild/buildtools",
           "sha256": "c0da24dcf623773a768ab7b291e22057f632c308982a3b30f1cacf7b13f9da43",
           "version": "v0.0.0-20260904073137-eaa4d125b423"
+        },
+        {
+          "importpath": "github.com/bazelbuild/rules_go",
+          "sha256": "d364bbfdc94f18fb3c89ff88f68fdbce392aedbac2a266e74f0836635f37e944",
+          "version": "v0.65.0"
         },
         {
           "importpath": "github.com/pelletier/go-toml/v2",
@@ -923,12 +933,42 @@
         {
           "importpath": "github.com/santhosh-tekuri/jsonschema/v6",
           "sha256": "48f5e138633d4d85be9f6cd447e2db32aabd00e530a00a45985695af5e0372e5",
-          "version": "v6.0.2"
+          "version": "v6.0.3"
+        },
+        {
+          "importpath": "github.com/bazelbuild/bazel-gazelle",
+          "sha256": "1df5817f056bccee14a1fa2bae6ecbceb9ce7720019da2c501d9324782383577",
+          "version": "v1.0.0-beta.1.0.20261008232422-160271019d4c"
+        },
+        {
+          "importpath": "github.com/bmatcuk/doublestar/v4",
+          "sha256": "4eeea45a0d1d95576ac99c9adddecd77878b98445bf679d3f193a51669bd1450",
+          "version": "v4.10.4"
+        },
+        {
+          "importpath": "github.com/google/go-cmp",
+          "sha256": "e7c7669d4a1dd589ba3e024ba27f43f293db611fe075ce20d7b884370d63febd",
+          "version": "v0.6.0"
+        },
+        {
+          "importpath": "golang.org/x/mod",
+          "sha256": "fc5b64ef51fd92f4b8763ebbd6fa95a70069d299c7de0f7c66661ef24283eb0c",
+          "version": "v0.41.0"
+        },
+        {
+          "importpath": "golang.org/x/sys",
+          "sha256": "9522f4c9806d1c26586ea80fa56292929bd295865e71981927f52996c6b1c831",
+          "version": "v0.48.0"
         },
         {
           "importpath": "golang.org/x/text",
-          "sha256": "971579f17e9abc5926ab76214f533bd517cf4925c885243ac4755a1a0a7c69ef",
-          "version": "v0.14.0"
+          "sha256": "4756c4b8eeeae2a20cb43c198c10701d20c53493bd90b91c6632153c9cbac240",
+          "version": "v0.42.0"
+        },
+        {
+          "importpath": "golang.org/x/tools/go/vcs",
+          "sha256": "51d8a765cfab38341546dd91b51fad7b792f0ae0306ba8b7212b2c1d5ba76704",
+          "version": "v0.1.0-deprecated"
         },
         {
           "importpath": "github.com/aymanbagabas/go-udiff",
@@ -996,24 +1036,9 @@
           "version": "v1.36.10"
         },
         {
-          "importpath": "golang.org/x/mod",
-          "sha256": "fc5b64ef51fd92f4b8763ebbd6fa95a70069d299c7de0f7c66661ef24283eb0c",
-          "version": "v0.41.0"
-        },
-        {
           "importpath": "golang.org/x/sync",
           "sha256": "febf4fed5dc12c0de24528f7065bf071cc74a2424070194aaf24617b91066cda",
           "version": "v0.23.0"
-        },
-        {
-          "importpath": "golang.org/x/sys",
-          "sha256": "9522f4c9806d1c26586ea80fa56292929bd295865e71981927f52996c6b1c831",
-          "version": "v0.48.0"
-        },
-        {
-          "importpath": "golang.org/x/text",
-          "sha256": "4756c4b8eeeae2a20cb43c198c10701d20c53493bd90b91c6632153c9cbac240",
-          "version": "v0.42.0"
         },
         {
           "importpath": "github.com/bazel-contrib/bazel-gazelle/v2",
@@ -1041,11 +1066,6 @@
           "version": "v1.7.0"
         },
         {
-          "importpath": "github.com/google/go-cmp",
-          "sha256": "e7c7669d4a1dd589ba3e024ba27f43f293db611fe075ce20d7b884370d63febd",
-          "version": "v0.6.0"
-        },
-        {
           "importpath": "github.com/pmezard/go-difflib",
           "sha256": "74b2e766eb215377864d587badf57e95521f692d2a7860b3c7759093f9c9bec2",
           "version": "v1.0.0"
@@ -1064,11 +1084,6 @@
           "importpath": "golang.org/x/tools",
           "sha256": "97e383f8a7bf8c22b7c80082a18e6421e5985869a3acc3c1c072c9750cc1ee45",
           "version": "v0.30.0"
-        },
-        {
-          "importpath": "golang.org/x/tools/go/vcs",
-          "sha256": "51d8a765cfab38341546dd91b51fad7b792f0ae0306ba8b7212b2c1d5ba76704",
-          "version": "v0.1.0-deprecated"
         },
         {
           "importpath": "google.golang.org/protobuf",
@@ -1144,6 +1159,21 @@
           "importpath": "gopkg.in/check.v1",
           "sha256": "6e6e2fca40eb8fe1455e6a08cd39833c7c2e9a2341a81fb181b89d0b1c725f48",
           "version": "v1.0.0-20201130134442-10cb98267c6c"
+        },
+        {
+          "importpath": "github.com/bazelbuild/bazel-gazelle",
+          "sha256": "41ee3d9c845fcc1be23a99b8ca8abf94efb900a71db91d728a83e370ea285f6d",
+          "version": "v0.54.0"
+        },
+        {
+          "importpath": "golang.org/x/text",
+          "sha256": "971579f17e9abc5926ab76214f533bd517cf4925c885243ac4755a1a0a7c69ef",
+          "version": "v0.14.0"
+        },
+        {
+          "importpath": "github.com/santhosh-tekuri/jsonschema/v6",
+          "sha256": "48f5e138633d4d85be9f6cd447e2db32aabd00e530a00a45985695af5e0372e5",
+          "version": "v6.0.2"
         },
         {
           "importpath": "cloud.google.com/go",
@@ -1879,6 +1909,11 @@
           "importpath": "honnef.co/go/tools",
           "sha256": "b1c60837ea61335f14df64f3194c3cd92e0f628f6064806718950f0d7a1dbe9e",
           "version": "v0.0.0-20190523083050-ea95bdfd59fc"
+        },
+        {
+          "importpath": "github.com/dlclark/regexp2",
+          "sha256": "7017e81fb9fa9227a3180a62e323158b4523c67062f0a8aa08637c092b8d4aa7",
+          "version": "v1.11.0"
         }
       ]
     },

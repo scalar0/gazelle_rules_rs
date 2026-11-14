@@ -1,0 +1,15 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "description": "Declared resource files for the consumer fixture.",
+    "additionalProperties": false,
+    "required": ["files"],
+    "properties": {
+        "files": {
+            "type": "array",
+            "description": "Package-relative files required when Rust targets compile.",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+        }
+    }
+}

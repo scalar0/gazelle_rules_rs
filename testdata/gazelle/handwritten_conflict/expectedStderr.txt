@@ -1,0 +1,1 @@
+gazelle: : critical: rules_rsgenerate : target "lib" conflicts with a handwritten rule

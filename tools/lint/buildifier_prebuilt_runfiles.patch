@@ -1,3 +1,8 @@
+# Support a runfiles directory when Buildifier runs inside a Bazel action without a manifest.
+# Upstream: https://github.com/keith/buildifier-prebuilt
+# Keep this patch until an upstream release passes that action check.
+# No upstream issue or pull request has been submitted.
+
 diff --git a/binary_runner.bash.template b/binary_runner.bash.template
 --- a/binary_runner.bash.template
 +++ b/binary_runner.bash.template

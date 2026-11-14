@@ -1,1 +1,3 @@
 repo(default_visibility = ["//:workspace_internal"])
+
+ignore_directories(["vendor", "target"])

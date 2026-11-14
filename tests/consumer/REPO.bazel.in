@@ -1,0 +1,9 @@
+"""Let fixture packages test local Cargo dependencies."""
+
+repo(default_visibility = ["//visibility:public"])
+
+ignore_directories([
+    "**/bazel-*",
+    "**/target",
+    "vendor",
+])

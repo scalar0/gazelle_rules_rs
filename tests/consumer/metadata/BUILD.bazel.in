@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "language",
+    srcs = ["handler.go"],
+    embedsrcs = ["resources.schema.json"],
+    importpath = "consumer/metadata",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@gazelle//v2/language",
+        "@gazelle//v2/rule",
+        "@gazelle_rules_rs//:rules_rs",
+    ],
+)
+

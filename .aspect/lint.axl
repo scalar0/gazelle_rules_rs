@@ -1,11 +1,17 @@
 """Configure Bazel and shell lint checks for the standalone extension."""
 
 load("@aspect//lint.axl", _lint = "lint")
+load("@aspect//run.axl", _run = "run")
 
 _ASPECTS = [
     "//tools/lint:linters.bzl%buildifier",
     "//tools/lint:linters.bzl%shellcheck",
 ]
+
+lint_go = _run.alias(
+    defaults = {"target": ["//tools/lint:golangci-lint"]},
+    summary = "Check Go source files and tests with golangci-lint.",
+)
 
 lint_all = _lint.alias(
     defaults = {

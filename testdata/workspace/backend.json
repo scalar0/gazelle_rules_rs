@@ -1,0 +1,11 @@
+{
+    "manifest": "Cargo.toml",
+    "crates_repository": "third_party_crates",
+    "rules_repository": "rust_rules",
+    "platform_triples": [
+        "aarch64-apple-darwin",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-apple-darwin",
+        "x86_64-unknown-linux-gnu"
+    ]
+}

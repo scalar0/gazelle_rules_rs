@@ -45,17 +45,15 @@ jobs:
                       brew install ripgrep
                     fi
                   fi
+            - name: Check Go BUILD generation
+              run: just go-check
             - name: Check source formats
               run: just fmt-check
-            - name: Check Bazel and shell policies
-              run: aspect lint-all //... --disk_cache="$RUNNER_TEMP/bazel-action-cache"
+            - name: Check Bazel, shell, and Go policies
+              run: just lint
             - name: Test Git hook adapters
               run: just git-hooks-test
             - name: Test the extension
-              run: aspect --ignore_all_rc_files test //:rules_rs_test //:rules_rs_integration_test --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= --test_output=errors
-            - name: Check consumer generation
-              working-directory: tests/consumer
-              run: aspect --ignore_all_rc_files gazelle --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= .
-            - name: Build and test the consumer
-              working-directory: tests/consumer
-              run: aspect --ignore_all_rc_files test //... //:root-probe-bench-test //crates/root-user:root-user-bench-test //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/probe:probe-bin-bench-test //crates/macros:macros-bench-test //crates/dynamic:dynamic-bench-test --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+              run: just test
+            - name: Generate, build, and test shared consumers
+              run: just consumer-test

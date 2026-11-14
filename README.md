@@ -1,3 +1,7 @@
+---
+title: Gazelle extension for rules_rs
+---
+
 # Gazelle extension for rules_rs
 
 This extension generates Bazel rules from one Cargo workspace.
@@ -26,7 +30,7 @@ The consumer selects the Rust compiler through its registered Bazel toolchain.
 
 ## Consumer setup
 
-Use the [consumer module](tests/consumer/MODULE.bazel) and [consumer BUILD file](tests/consumer/BUILD.bazel) as a complete example.
+Use the [consumer module](tests/consumer/MODULE.bazel.in) and [consumer BUILD file](tests/consumer/BUILD.bazel.in) as configuration examples.
 Replace its local module override with a pinned Git commit from this repository.
 Private consumers must configure GitHub access before Bazel fetches the repository.
 
@@ -61,7 +65,8 @@ backend_config(
 
 Add `@gazelle_backend//:config.json` to the Gazelle rule's `data`.
 Set its argument to `-rules_rs_config=$(execpath @gazelle_backend//:config.json)`.
-The [configuration schema](configuration.schema.json) defines the public settings.
+The [configuration schema](src/configuration.schema.json) defines the public settings.
+Every generation run requires this backend configuration.
 Repository names use their apparent Bzlmod names without `@`.
 The rules_rust repository currently uses the apparent name `rules_rust`.
 
@@ -78,8 +83,8 @@ Standalone registry dependencies need a separate crate repository and currently 
 
 The legacy `-rules_rs_crate_scope` flag remains available for existing consumers.
 It restricts generation to immediate children of comma-separated directories.
-Without a backend configuration, legacy feature resolution reads literal platform settings from MODULE.bazel.
-New consumers should use the backend configuration.
+This flag also requires the backend configuration.
+The extension does not parse consumer MODULE syntax.
 
 ## Rule ownership
 
@@ -88,30 +93,58 @@ The extension updates or removes rules with that marker.
 It rejects name conflicts with handwritten rules.
 Gazelle preserves `# keep` attributes and rules.
 A kind change fails when a keep comment prevents replacement.
+The generator preserves a `# keep` comment on a file item and excludes that file from generated globs.
+For conditional kept file lists with generated globs, keep the complete attribute.
 
-The extension validates workspace metadata, target generation, handler contributions, and package conflicts before Gazelle writes files.
+The extension validates workspace metadata, target generation, handler contributions, source boundaries, and package conflicts before Gazelle writes files.
 A failure in a later Cargo package leaves earlier BUILD files unchanged.
 Gazelle owns file formatting, merging, load updates, and diff output.
 The extension uses the public Fix hook to update default backend load labels after repository renames.
 
-Targets inherit package visibility.
-Library labels use the package directory name, or the Cargo package name for a repository-root package.
-Integration test labels use `<base>-integration-tests/<target>`.
-Example labels use `<base>-examples/<target>`.
-Explicit benchmark labels use `<base>-benches/<target>`.
-Implicit library and binary benchmarks use `<target>-bench-test`.
-Additional library outputs use `<target>-<crate-type>`.
+Public targets inherit package visibility.
+The target plan assigns one name to each Cargo target and derived test.
+In the following table, `<name>` means the Cargo target name.
+
+| Target                      | Label                         |
+| --------------------------- | ----------------------------- |
+| Library or procedural macro | `:lib`                        |
+| Additional library output   | `:lib/<type>`                 |
+| Build script                | `:build-script`               |
+| Binary                      | `:bin/<name>`                 |
+| Example                     | `:examples/<name>`            |
+| Additional example output   | `:examples/<name>/<type>`     |
+| Library unit tests          | `:tests/unit/lib`             |
+| Binary unit tests           | `:tests/unit/bin/<name>`      |
+| Example unit tests          | `:tests/unit/examples/<name>` |
+| Documentation tests         | `:tests/doc`                  |
+| Integration test            | `:tests/integration/<name>`   |
+| Integration test suite      | `:tests/integration`          |
+| Explicit benchmark          | `:benches/<name>`             |
+| Library benchmark harness   | `:tests/bench/lib`            |
+| Binary benchmark harness    | `:tests/bench/bin/<name>`     |
+
+These names are public Bazel labels.
+Every Cargo binary uses the same naming pattern, including a binary with the crate root `src/main.rs`.
+For a Cargo binary named `cli`, the binary label is `:bin/cli` and its unit test label is `:tests/unit/bin/cli`.
+Executable targets occupy leaf paths so a file cannot conflict with another target's output directory.
+Executable output paths follow the rule names directly.
+Cargo environment values use the executable location.
+
+The package-name alias points to `:lib` because rules_rs uses that label for local dependencies.
+Repository-root packages use the Cargo package name for this alias.
+The extension rejects collisions between this alias and another generated target.
 
 Libraries and binaries under `src/` use a compact `src/**/*.rs` glob that excludes `src/main.rs`.
 A target whose root falls outside that glob also lists its root explicitly.
 Other targets list their crate root without a directory-wide glob.
 For shared modules or custom source layouts, set the complete `srcs` attribute with Gazelle's `# keep` comment.
-The [consumer fixture](tests/consumer/crates/probe/BUILD.bazel) shows a test override for shared modules.
 Bazel excludes nested Bazel packages from globs.
+The extension rejects explicit package-relative Rust sources below another Bazel package.
 Declare non-Rust inputs in Cargo metadata.
 Library inputs also include the Cargo README when present.
+Manifest access requires explicit compiler or runtime inputs and a `CARGO_MANIFEST_PATH` value.
 
-Targets with one public Cargo configuration compile under their normal labels.
+Cargo targets with one configuration do not need context-specific variants.
 Equivalent configurations use the standard backend dependency helpers.
 Compatible unit tests reuse their crate through the `crate` attribute.
 Additional configurations use content-hashed labels without absolute paths.
@@ -126,7 +159,7 @@ External dependency resolution remains the responsibility of rules_rs.
 Use `[workspace.metadata.rules_rs]` for defaults.
 Use `[package.metadata.rules_rs]` for package values.
 An explicit package field replaces its workspace default, including an empty list or map.
-The [metadata schema](metadata.schema.json) defines fields and validation rules.
+The [metadata schema](src/metadata.schema.json) defines fields and validation rules.
 Unknown fields in this namespace cause an error.
 
 The `dep_overrides` array maps external dependency label prefixes to local labels.
@@ -152,11 +185,84 @@ The public `@gazelle_rules_rs//:vendor-config` command maintains matching Cargo 
 It preserves configuration outside its marked block.
 Build scripts own resource parsing and validation.
 
+## Manifest access
+
+The generator omits `CARGO_MANIFEST_PATH` and manifest inputs by default.
+It preserves explicit metadata, handler contributions, and Gazelle keep attributes.
+Existing consumers that read their manifest must opt in before regeneration.
+Cargo package environment values and other compiler inputs retain their existing behavior.
+
+For Rust compilation, declare the manifest through resource metadata.
+
+```toml
+[package.metadata.rules_rs]
+library_compile_data = ["Cargo.toml"]
+```
+
+Keep the `rustc_env` attribute on the generated library.
+Retain other values from that attribute when the code uses them.
+
+```starlark
+rust_library(
+    name = "lib",
+    rustc_env = {
+        "CARGO_MANIFEST_PATH": "$(execpath :Cargo.toml)",
+        "CARGO_PKG_DESCRIPTION": "Read the package manifest.",
+        "CARGO_PKG_NAME": "manifest-reader",
+    },  # keep
+)
+```
+
+This example shows the attributes to add to the generated rule.
+Gazelle continues to maintain its other attributes.
+Rust source can then use `include_str!(env!("CARGO_MANIFEST_PATH"))`.
+Use `unit_compile_data`, `test_compile_data`, or `build_compile_data` when only that compilation reads the manifest.
+Set the matching target's `rustc_env` attribute with `# keep`.
+Crate-based unit tests inherit their library's inputs and environment.
+Separate Cargo test contexts need their own explicit environment value.
+Additional library outputs and independent target variants also need their own kept environment values.
+A compiled metadata handler can supply both inputs and environment values through `TargetInputs`.
+
+For build-script execution, use an existing build input.
+For a workspace-root package, set `cargo_path` to `Cargo.toml`.
+For a nested package, include its repository-relative directory.
+
+```toml
+[package.metadata.rules_rs.build_inputs.CARGO_MANIFEST_PATH]
+cargo_path = "crates/manifest-reader/Cargo.toml"
+bazel_label = ":Cargo.toml"
+```
+
+The generator adds the manifest to build-script `data` and sets `build_script_env.CARGO_MANIFEST_PATH` through `execpath`.
+This declaration supports a build script that calls `std::env::var("CARGO_MANIFEST_PATH")` during execution.
+Each build-input variable needs one mapping across the workspace.
+If several packages need different manifests, use package-local `build_data` and a kept `build_script_env` attribute instead.
+
+```toml
+[package.metadata.rules_rs]
+build_data = ["Cargo.toml"]
+```
+
+```starlark
+cargo_build_script(
+    name = "build-script",
+    build_script_env = {
+        "CARGO_MANIFEST_PATH": "$(execpath :Cargo.toml)",
+    },  # keep
+)
+```
+
+Retain other build-script environment values when adding this keep attribute.
+Build-script compilation needs a separate `build_compile_data` input and a kept `rustc_env` value if its source uses `env!`.
+Whole-attribute keep comments also support explicit `compile_data`, `data`, and `build_script_env` declarations.
+Keep attributes take ownership of the complete value, including future resource and environment changes.
+
 ## Compiled metadata handlers
 
 A consumer can compile additional handlers into its Gazelle binary.
-The [handler API](handlers.go) defines `MetadataHandler`, `HandlerSpec`, `MetadataContext`, and `Contribution`.
-The [consumer handler](tests/consumer/metadata/handler.go) supplies an independent example.
+The [handler API](src/handlers.go) defines `MetadataHandler`, `HandlerSpec`, `MetadataContext`, and `Contribution`.
+Import `github.com/scalar0/gazelle_rules_rs/src` to use this API.
+The [consumer handler](src/integration/metadata/handler.go) shows target selection through these descriptions.
 
 A handler declares one namespace, a JSON Schema, and its additional rule kinds with load information.
 Its constructor calls `rulesrs.New(handler)` from the language package's `NewV2` function.
@@ -166,7 +272,11 @@ A missing optional namespace does not call its handler.
 
 Handlers receive separate copies of workspace and package metadata.
 Each handler defines its own inheritance policy.
-`TargetInfo.BazelTarget` identifies the generated build target for input contributions.
+`TargetInfo.Role` identifies a target's purpose, including derived tests.
+`TargetInfo.OutputType` identifies its Cargo output type.
+Select the required description and use its `BazelTarget` for input contributions.
+Handlers do not need to construct generated target names.
+Descriptions retain their Cargo role when a public label uses a context alias.
 Handlers can add rules, compiler inputs, runtime inputs, and environment values.
 They cannot replace Cargo target identity, dependencies, or features through this interface.
 Duplicate namespaces, duplicate kinds, unknown input targets, conflicting environment values, and rule-name collisions cause errors.
@@ -190,7 +300,7 @@ Run the full test suite after a toolchain update.
 The generator rejects unknown unit-graph versions, invalid indices, invalid roots, and cycles.
 
 Workspace members and target sources must stay inside the Bazel repository.
-Target source roots must stay inside their Cargo package.
+Target source roots must stay inside their Cargo package and Bazel package.
 A canonical `rlib` supports Bazel dependency edges when Cargo requests only another library output.
 Each requested library output type gets a separate target.
 
@@ -206,8 +316,18 @@ The [CI workflow](.github/workflows/ci.yml) uses Aspect for standalone tests, co
 The [Aspect version file](.aspect/version.axl) pins the CLI for local and CI use.
 The extension owns the copied format, lint, maintenance, and Git hook configuration.
 CI also checks source formats, Bazel and shell policies, and Git hook behavior.
-The consumer shares the Aspect configuration through a relative symbolic link.
-The consumer uses renamed backend repositories, a registry dependency, resource metadata, and multiple Cargo target kinds.
+Go code uses normal packages under `src/` and standard test filenames.
+The official Gazelle Go extension maintains Go BUILD rules.
+An internal Cargo adapter owns declared tool resolution and subprocess execution.
+Go lint uses a pinned golangci-lint release and the selected Bazel Go SDK.
+
+Go integration tests and Rust consumer tests share the same fixture inputs.
+Bazel fetches the upstream rules_rs manifest-path fixture without vendoring its source files.
+A small Cargo workspace patch makes its nested build script part of our generation input.
+That fixture opts in through resource metadata and a kept environment attribute.
+The project fixture supplies metadata handlers, generated resources, platform contexts, and additional target types.
+Consumer tests stage these inputs before generation and compilation.
+The project fixture also uses renamed backend repositories and a registry dependency.
 
 The code originated in `scalar0/kernel-toolchain` at commit `20971ec52ecdca2534c53171944ab4425cc09fc4`.
 The [Apache-2.0 license](LICENSE) continues to apply.

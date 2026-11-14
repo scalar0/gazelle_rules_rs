@@ -1,2 +1,4 @@
-load("@crates//:defs.bzl", "aliases")
-filegroup(name="untouched",srcs=[])
+filegroup(
+    name = "untouched",
+    srcs = [],
+)

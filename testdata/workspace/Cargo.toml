@@ -21,3 +21,11 @@ test_timeout = "short"
 
 [workspace.metadata.schemas]
 catalog = "schemas"
+
+[package]
+edition.workspace = true
+name = "root-probe"
+version.workspace = true
+
+[dependencies]
+probe = {path = "crates/probe"}

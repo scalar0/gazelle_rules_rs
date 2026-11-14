@@ -1,0 +1,12 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "testfixture",
+    srcs = ["stage.go"],
+    importpath = "github.com/scalar0/gazelle_rules_rs/src/internal/testfixture",
+    visibility = ["//src:__subpackages__"],
+    deps = [
+        "@com_github_pelletier_go_toml_v2//:go-toml",
+        "@rules_go//go/runfiles",
+    ],
+)

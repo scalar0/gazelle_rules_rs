@@ -1,0 +1,23 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "cargo",
+    srcs = ["cargo.go"],
+    data = [
+        "//:cargo",
+        "//:rustc",
+    ],
+    importpath = "github.com/scalar0/gazelle_rules_rs/src/internal/cargo",
+    visibility = ["//src:__subpackages__"],
+    x_defs = {
+        "github.com/scalar0/gazelle_rules_rs/src/internal/cargo.CargoRunfile": "$(rlocationpath //:cargo)",
+        "github.com/scalar0/gazelle_rules_rs/src/internal/cargo.RustcRunfile": "$(rlocationpath //:rustc)",
+    },
+    deps = ["@rules_go//go/runfiles"],
+)
+
+go_test(
+    name = "cargo_test",
+    srcs = ["cargo_test.go"],
+    embed = [":cargo"],
+)

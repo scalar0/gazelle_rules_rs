@@ -1,5 +1,7 @@
+mod shared;
 #[test]
 fn check() {
+    assert_eq!(probe::value(), shared::expected());
     assert_eq!(env!("CARGO_PKG_NAME"), "probe");
     let r#gen = dev_support::value();
     assert_eq!(probe::value(), dev_support::value());

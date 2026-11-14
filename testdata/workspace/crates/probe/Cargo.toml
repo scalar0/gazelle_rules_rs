@@ -7,6 +7,7 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
+itoa = "=1.0.18"
 renamed = {package = "normal-support", path = "../normal"}
 
 [dev-dependencies]
@@ -54,4 +55,27 @@ build_data = [
   "//:Cargo.toml",
   "//schemas:probe.schema.json",
   "Cargo.toml",
+]
+
+[lib]
+crate-type = [
+  "cdylib",
+  "rlib",
+  "staticlib",
+]
+
+[[bench]]
+harness = false
+name = "smoke"
+
+[[example]]
+crate-type = [
+  "rlib",
+  "staticlib",
+]
+name = "ffi"
+
+[package.metadata.resources]
+files = [
+  "resources/message.txt",
 ]

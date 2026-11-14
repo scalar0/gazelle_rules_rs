@@ -1,0 +1,37 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "consumer-test_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/scalar0/gazelle_rules_rs/src/cmd/consumer-test",
+    visibility = ["//visibility:private"],
+    deps = ["//src/internal/testfixture"],
+)
+
+go_binary(
+    name = "consumer-test",
+    args = [
+        "--backend-config=$(rlocationpath //:testdata/workspace/backend.json)",
+        "--owned-manifest=$(rlocationpath //:testdata/workspace/Cargo.toml)",
+        "--upstream-manifest=$(rlocationpath @rules_rs_manifest_fixture//:Cargo.toml)",
+        "--vendor-manifest=$(rlocationpath @fixture_itoa//:Cargo.toml)",
+        "--handler-schema=$(rlocationpath //src/integration/metadata:resources.schema.json)",
+        "--handler=$(rlocationpath //src/integration/metadata:handler.go)",
+        "--configuration=$(rlocationpath //:tests/consumer/MODULE.bazel.in)",
+    ],
+    data = [
+        "//:consumer_templates",
+        "//:fixture_sources",
+        "//:testdata/workspace/Cargo.toml",
+        "//:testdata/workspace/backend.json",
+        "//:tests/consumer/MODULE.bazel.in",
+        "//src/integration/metadata:handler.go",
+        "//src/integration/metadata:resources.schema.json",
+        "@fixture_itoa//:Cargo.toml",
+        "@fixture_itoa//:sources",
+        "@rules_rs_manifest_fixture//:Cargo.toml",
+        "@rules_rs_manifest_fixture//:sources",
+    ],
+    embed = [":consumer-test_lib"],
+    visibility = ["//visibility:public"],
+)

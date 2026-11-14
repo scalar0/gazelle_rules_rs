@@ -1,0 +1,46 @@
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Checksums come from the upstream v2.15.0 release checksum file.
+http_archive(
+    name = "golangci_lint_linux_amd64",
+    build_file_content = 'exports_files(["golangci-lint"])',
+    dev_dependency = True,
+    sha256 = "9b7fe6a6bf6334b98decf8d86b11415ea7889afdabdd1959fdce23af2a9ebcea",
+    strip_prefix = "golangci-lint-2.15.0-linux-amd64",
+    urls = ["https://github.com/golangci/golangci-lint/releases/download/v2.15.0/golangci-lint-2.15.0-linux-amd64.tar.gz"],
+)
+
+http_archive(
+    name = "golangci_lint_linux_arm64",
+    build_file_content = 'exports_files(["golangci-lint"])',
+    dev_dependency = True,
+    sha256 = "b4d8f17068b35ee6060cc2f69a16fb48740d706fbba81661c318649c114a6998",
+    strip_prefix = "golangci-lint-2.15.0-linux-arm64",
+    urls = ["https://github.com/golangci/golangci-lint/releases/download/v2.15.0/golangci-lint-2.15.0-linux-arm64.tar.gz"],
+)
+
+http_archive(
+    name = "golangci_lint_darwin_amd64",
+    build_file_content = 'exports_files(["golangci-lint"])',
+    dev_dependency = True,
+    sha256 = "767b899a28285e88ded2823d5dcc4bc5ef681173eb2d80f029a7b17ee4ece3b8",
+    strip_prefix = "golangci-lint-2.15.0-darwin-amd64",
+    urls = ["https://github.com/golangci/golangci-lint/releases/download/v2.15.0/golangci-lint-2.15.0-darwin-amd64.tar.gz"],
+)
+
+http_archive(
+    name = "golangci_lint_darwin_arm64",
+    build_file_content = 'exports_files(["golangci-lint"])',
+    dev_dependency = True,
+    sha256 = "d1e409481a8ca846c4bc97e781eb5cb1bd5c23353a0b3977a1cbda1b1b6447d5",
+    strip_prefix = "golangci-lint-2.15.0-darwin-arm64",
+    urls = ["https://github.com/golangci/golangci-lint/releases/download/v2.15.0/golangci-lint-2.15.0-darwin-arm64.tar.gz"],
+)
+
+register_toolchains(
+    "//tools/lint:linux_amd64_toolchain",
+    "//tools/lint:linux_arm64_toolchain",
+    "//tools/lint:darwin_amd64_toolchain",
+    "//tools/lint:darwin_arm64_toolchain",
+    dev_dependency = True,
+)

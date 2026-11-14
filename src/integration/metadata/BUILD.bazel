@@ -1,0 +1,22 @@
+load("@rules_go//go:def.bzl", "go_library")
+
+exports_files(
+    [
+        "handler.go",
+        "resources.schema.json",
+    ],
+    visibility = ["//src:__subpackages__"],
+)
+
+go_library(
+    name = "metadata",
+    srcs = ["handler.go"],
+    embedsrcs = ["resources.schema.json"],
+    importpath = "github.com/scalar0/gazelle_rules_rs/src/integration/metadata",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//src",
+        "@gazelle//v2/language",
+        "@gazelle//v2/rule",
+    ],
+)

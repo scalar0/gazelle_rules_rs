@@ -1,0 +1,30 @@
+load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
+load(":FIXTURE_KIND.bzl", "BENCHMARK_TARGETS")
+
+gazelle_binary(
+    name = "runner",
+    languages = ["//metadata:language"],
+    version = 2,
+)
+
+gazelle(
+    name = "gazelle",
+    args = [
+        "-r=true",
+        "-rules_rs_config=$(execpath @gazelle_backend//:config.json)",
+    ],
+    data = ["@gazelle_backend//:config.json"],
+    gazelle = ":runner",
+)
+
+exports_files([
+    "Cargo.toml",
+    "Cargo.lock",
+    "vendor-input.txt",
+])
+
+# The stager selects the benchmark targets for each Cargo fixture.
+test_suite(
+    name = "benchmarks",
+    tests = BENCHMARK_TARGETS,
+)

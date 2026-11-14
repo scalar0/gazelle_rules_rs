@@ -12,6 +12,17 @@ bazel_dep(name = "llvm", version = "0.8.27")
 rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
 use_repo(rules_rust, "rules_rust")
 
+go_sdk = use_extension(
+    "@rules_go//go:extensions.bzl",
+    "go_sdk",
+    dev_dependency = True,
+)
+go_sdk.from_file(
+    name = "go_sdk",
+    go_mod = "//:go.mod",
+)
+use_repo(go_sdk, "go_sdk")
+
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
 use_repo(
@@ -22,6 +33,8 @@ use_repo(
 )
 
 include("//:cargo.MODULE.bazel")
+include("//:fixtures.MODULE.bazel")
+include("//:go-lint.MODULE.bazel")
 
 toolchains = use_extension(
     "@rules_rs//rs/toolchains:module_extension.bzl",

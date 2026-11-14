@@ -1,19 +1,32 @@
 load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
 load("@npm//:defs.bzl", "npm_link_all_packages")
-load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
-load(":rustc.bzl", "rustc_runfiles", "tool_paths")
+load(":rustc.bzl", "rustc_runfiles")
 
 npm_link_all_packages(name = "node_modules")
 
 exports_files([
     "cargo.MODULE.bazel",
+    "fixtures.MODULE.bazel",
+    "go-lint.MODULE.bazel",
+    ".golangci.yml",
     "config.bzl",
-    "configuration.schema.json",
+    "testdata/patches/manifest-workspace.patch",
     ".shellcheckrc",
 ])
 
-exports_files(
-    ["metadata.schema.json"],
+# gazelle:prefix github.com/scalar0/gazelle_rules_rs
+# gazelle:exclude tests
+# gazelle:exclude testdata
+
+alias(
+    name = "metadata.schema.json",
+    actual = "//src:metadata.schema.json",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "configuration.schema.json",
+    actual = "//src:configuration.schema.json",
     visibility = ["//visibility:public"],
 )
 
@@ -69,62 +82,19 @@ filegroup(
     name = "rustc_sysroot",
     srcs = [":rustc"],
     output_group = "sysroot",
+    visibility = ["//src/integration:__pkg__"],
 )
 
-tool_paths(
-    name = "tool_paths",
-    cargo = ":cargo",
-    rustc = ":rustc",
-)
-
-go_library(
+alias(
     name = "rules_rs",
-    srcs = [
-        "configuration.go",
-        "contexts.go",
-        "gazelle.go",
-        "generate.go",
-        "handlers.go",
-        "lints.go",
-        "metadata.go",
-        "options.go",
-        "platforms.go",
-        "standalone.go",
-        "vendor_config.go",
-        ":tool_paths",
-    ],
-    data = [
-        ":cargo",
-        ":rustc",
-    ],
-    embedsrcs = [
-        "metadata.schema.json",
-        "configuration.schema.json",
-    ],
-    importpath = "github.com/scalar0/gazelle_rules_rs",
+    actual = "//src",
     visibility = ["//visibility:public"],
-    deps = [
-        "@com_github_bazelbuild_buildtools//build",
-        "@com_github_pelletier_go_toml_v2//:go-toml",
-        "@com_github_santhosh_tekuri_jsonschema_v6//:jsonschema",
-        "@gazelle//v2/config",
-        "@gazelle//v2/errors",
-        "@gazelle//v2/label",
-        "@gazelle//v2/language",
-        "@gazelle//v2/rule",
-        "@rules_go//go/runfiles",
-    ],
 )
 
-go_binary(
+alias(
     name = "vendor-config",
-    srcs = ["vendor-config/main.go"],
-    data = [
-        ":cargo",
-        ":rustc",
-    ],
+    actual = "//src/cmd/vendor-config",
     visibility = ["//visibility:public"],
-    deps = [":rules_rs"],
 )
 
 gazelle_binary(
@@ -138,53 +108,80 @@ gazelle(
     gazelle = ":gazelle_binary",
 )
 
-go_test(
-    name = "rules_rs_test",
-    srcs = [
-        "tests/contexts.go",
-        "tests/generate.go",
-        "tests/handlers.go",
-        "tests/options.go",
-        "tests/platforms.go",
-        "tests/reconcile.go",
-        "tests/standalone.go",
-        "tests/vendor_config.go",
-    ],
-    embed = [":rules_rs"],
-    deps = [
-        "@gazelle//v2/merger",
-        "@gazelle//v2/rule",
-    ],
+gazelle_binary(
+    name = "gazelle_go_binary",
+    languages = ["@gazelle//language/go"],
+    version = 2,
 )
 
-# Cargo uses the registered Rust compiler to read target configuration.
-go_test(
+gazelle(
+    name = "gazelle_go",
+    gazelle = ":gazelle_go_binary",
+    mode = "diff",
+)
+
+gazelle(
+    name = "gazelle_go_update",
+    gazelle = ":gazelle_go_binary",
+)
+
+alias(
+    name = "rules_rs_test",
+    actual = "//src:src_test",
+)
+
+alias(
     name = "rules_rs_integration_test",
-    srcs = [
-        "tests/cargo_vendor.go",
-        "tests/integration.go",
-        "tests/standalone_integration.go",
-    ],
-    args = [
-        "-gazelle=$(rlocationpath :gazelle_binary)",
-        "-fixture=$(rlocationpath testdata/workspace/Cargo.toml)",
-        "-cargo=$(rlocationpath :cargo)",
-        "-rustc=$(rlocationpath :rustc)",
-        "-sysroot=$(rlocationpath :rustc_sysroot)",
-        "-vendor-config=$(rlocationpath :vendor-config)",
-    ],
-    data = [
-        ":cargo",
-        ":gazelle_binary",
-        ":rustc",
-        ":rustc_sysroot",
-        ":vendor-config",
-    ] + glob(["testdata/workspace/**"]),
-    deps = ["@rules_go//go/runfiles"],
+    actual = "//src/integration:integration_test",
 )
 
 filegroup(
     name = "rust_fixture_sources",
     srcs = glob(["testdata/**/*.rs"]),
     tags = ["lint-with-rust"],
+)
+
+filegroup(
+    name = "fixture_sources",
+    srcs = glob(
+        ["testdata/**"],
+        exclude = ["testdata/**/target/**"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "consumer-test",
+    actual = "//src/cmd/consumer-test",
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "consumer_templates",
+    srcs = [
+        "tests/consumer/.bazelversion",
+        "tests/consumer/BUILD.bazel.in",
+        "tests/consumer/MODULE.bazel.in",
+        "tests/consumer/REPO.bazel.in",
+        "tests/consumer/metadata/BUILD.bazel.in",
+        "tests/consumer/owned.bzl",
+        "tests/consumer/upstream.bzl",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+gazelle_binary(
+    name = "integration_runner",
+    languages = ["//src/integration/metadata"],
+    version = 2,
+    visibility = ["//src/integration:__pkg__"],
+)
+
+exports_files(
+    [
+        "testdata/workspace/Cargo.toml",
+        "testdata/workspace/backend.json",
+        "tests/consumer/MODULE.bazel.in",
+    ],
+    visibility = ["//src:__subpackages__"],
 )

@@ -1,0 +1,15 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "vendor-config_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/scalar0/gazelle_rules_rs/src/cmd/vendor-config",
+    visibility = ["//visibility:private"],
+    deps = ["//src"],
+)
+
+go_binary(
+    name = "vendor-config",
+    embed = [":vendor-config_lib"],
+    visibility = ["//visibility:public"],
+)

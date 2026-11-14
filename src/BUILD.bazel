@@ -1,0 +1,65 @@
+load("@rules_go//go:def.bzl", "go_library", "go_test")
+
+exports_files(
+    [
+        "configuration.schema.json",
+        "metadata.schema.json",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+go_library(
+    name = "src",
+    srcs = [
+        "configuration.go",
+        "contexts.go",
+        "gazelle.go",
+        "generate.go",
+        "handlers.go",
+        "lints.go",
+        "metadata.go",
+        "options.go",
+        "standalone.go",
+        "targets.go",
+        "vendor_config.go",
+    ],
+    embedsrcs = [
+        "configuration.schema.json",
+        "metadata.schema.json",
+    ],
+    importpath = "github.com/scalar0/gazelle_rules_rs/src",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//src/internal/cargo",
+        "@com_github_bazelbuild_buildtools//build",
+        "@com_github_pelletier_go_toml_v2//:go-toml",
+        "@com_github_santhosh_tekuri_jsonschema_v6//:jsonschema",
+        "@gazelle//v2/config",
+        "@gazelle//v2/errors",
+        "@gazelle//v2/label",
+        "@gazelle//v2/language",
+        "@gazelle//v2/rule",
+        "@rules_go//go/runfiles",
+    ],
+)
+
+go_test(
+    name = "src_test",
+    srcs = [
+        "contexts_test.go",
+        "generate_test.go",
+        "handlers_test.go",
+        "options_test.go",
+        "reconcile_test.go",
+        "standalone_test.go",
+        "vendor_config_test.go",
+    ],
+    embed = [":src"],
+    visibility = ["//:__pkg__"],  # keep
+    deps = [
+        "@com_github_bazelbuild_buildtools//build",
+        "@gazelle//v2/config",
+        "@gazelle//v2/merger",
+        "@gazelle//v2/rule",
+    ],
+)
