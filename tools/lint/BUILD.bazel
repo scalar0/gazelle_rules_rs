@@ -1,83 +1,22 @@
-load("@rules_shell//shell:sh_test.bzl", "sh_test")
-load(":golangci.bzl", "golangci_lint", "golangci_release")
+load(":linters.bzl", "golangci_test")
 
 exports_files([
     "buildifier_prebuilt_runfiles.patch",
+    "golangci_metadata_paths.patch",
     "linters.bzl",
+    "multitool.lock.json",
 ])
 
-toolchain_type(name = "golangci_toolchain_type")
-
-golangci_release(
-    name = "linux_amd64_release",
-    binary = "@golangci_lint_linux_amd64//:golangci-lint",
+# These checks protect the repository lint configuration and Go rule selection.
+# The clean library must pass. The test source must report the known format error.
+# Go package tests do not run the configured lint aspect.
+golangci_test(
+    name = "golangci_clean_test",
+    srcs = ["//tools/lint/testdata:clean"],
 )
 
-toolchain(
-    name = "linux_amd64_toolchain",
-    exec_compatible_with = [
-        "@platforms//os:linux",
-        "@platforms//cpu:x86_64",
-    ],
-    toolchain = ":linux_amd64_release",
-    toolchain_type = ":golangci_toolchain_type",
-)
-
-golangci_release(
-    name = "linux_arm64_release",
-    binary = "@golangci_lint_linux_arm64//:golangci-lint",
-)
-
-toolchain(
-    name = "linux_arm64_toolchain",
-    exec_compatible_with = [
-        "@platforms//os:linux",
-        "@platforms//cpu:aarch64",
-    ],
-    toolchain = ":linux_arm64_release",
-    toolchain_type = ":golangci_toolchain_type",
-)
-
-golangci_release(
-    name = "darwin_amd64_release",
-    binary = "@golangci_lint_darwin_amd64//:golangci-lint",
-)
-
-toolchain(
-    name = "darwin_amd64_toolchain",
-    exec_compatible_with = [
-        "@platforms//os:osx",
-        "@platforms//cpu:x86_64",
-    ],
-    toolchain = ":darwin_amd64_release",
-    toolchain_type = ":golangci_toolchain_type",
-)
-
-golangci_release(
-    name = "darwin_arm64_release",
-    binary = "@golangci_lint_darwin_arm64//:golangci-lint",
-)
-
-toolchain(
-    name = "darwin_arm64_toolchain",
-    exec_compatible_with = [
-        "@platforms//os:osx",
-        "@platforms//cpu:aarch64",
-    ],
-    toolchain = ":darwin_arm64_release",
-    toolchain_type = ":golangci_toolchain_type",
-)
-
-golangci_lint(
-    name = "golangci-lint",
-    config = "//:.golangci.yml",
-)
-
-sh_test(
-    name = "golangci_test",
-    size = "small",
-    srcs = ["golangci.test.bash"],
-    args = ["$(rlocationpath :golangci-lint)"],
-    data = [":golangci-lint"],
-    use_bash_launcher = True,
+golangci_test(
+    name = "golangci_source_test",
+    srcs = ["//tools/lint/testdata:test_sources"],
+    expected_exit_code = 1,
 )

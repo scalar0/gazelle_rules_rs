@@ -40,7 +40,7 @@ set -euo pipefail
 jq -cn --arg directory "$PWD" --arg editor "${GIT_EDITOR:-}" --args \
     '{directory:$directory,editor:$editor,argv:$ARGS.positional}' -- "$@" >> "$GAZELLE_RULES_RS_HOOK_LOG"
 if [[ ${1:-} == input ]]; then cat > "$GAZELLE_RULES_RS_HOOK_INPUT"; fi
-if [[ ${1:-} == lint-go ]]; then exit "${GAZELLE_RULES_RS_GO_LINT_EXIT:-0}"; fi
+if [[ ${1:-} == lint-all ]]; then exit "${GAZELLE_RULES_RS_LINT_EXIT:-0}"; fi
 exit "${GAZELLE_RULES_RS_HOOK_EXIT:-0}"
 SH
 chmod +x "$scratch/bin/probe"
@@ -93,10 +93,10 @@ cmp "$hooks_dir"/pre-commit "$scratch/first-adapter" || fail 'Setup changed an u
 : >"$GAZELLE_RULES_RS_HOOK_LOG"
 run 0 git hook run pre-commit
 run 0 git hook run pre-merge-commit
-assert_calls 'map(.argv) == [["quick"],["lint-all","--strategy=soft","//..."],["lint-go"],["quick"],["lint-all","--strategy=soft","//..."],["lint-go"]]'
-# Go lint failures must remain advisory. The existing failure check stops at formatting.
-GAZELLE_RULES_RS_GO_LINT_EXIT=37 run 0 git hook run pre-commit
-rg -q 'Go lint failed with exit code 37' "$err" || fail 'The hook hid a Go lint failure.'
+assert_calls 'map(.argv) == [["quick"],["lint-all","--strategy=soft","//..."],["quick"],["lint-all","--strategy=soft","//..."]]'
+# Lint execution failures must remain advisory after the combined lint check.
+GAZELLE_RULES_RS_LINT_EXIT=37 run 0 git hook run pre-commit
+rg -q 'Lint checks failed with exit code 37' "$err" || fail 'The hook hid a lint failure.'
 GAZELLE_RULES_RS_HOOK_EXIT=37 run 37 git hook run pre-commit
 printf 'refs/heads/main abc refs/heads/main def\n' >"$scratch/refs"
 : >"$GAZELLE_RULES_RS_HOOK_LOG"
@@ -180,7 +180,7 @@ mkdir -p nested
 cd nested
 : >"$GAZELLE_RULES_RS_HOOK_LOG"
 run 0 git hook run pre-commit
-assert_calls 'length == 3 and all(.[]; .directory | endswith("/linked worktree"))'
+assert_calls 'length == 2 and all(.[]; .directory | endswith("/linked worktree"))'
 printf 'Keep the nested message.\n' >.gitcommit
 printf 'Delete the worktree message.\n' >../.gitcommit
 run 0 git hook run post-commit

@@ -7,10 +7,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bazel-contrib/bazel-gazelle/v2/language"
 	"github.com/bazel-contrib/bazel-gazelle/v2/merger"
 	"github.com/bazel-contrib/bazel-gazelle/v2/rule"
 	bzl "github.com/bazelbuild/buildtools/build"
 )
+
+func reconcile(file *rule.File, rules []*rule.Rule) (language.GenerateResult, error) {
+	return reconcileKinds(file, rules, kindMap())
+}
 
 func TestConfiguredScope(t *testing.T) {
 	for _, scope := range []string{"crates", "project/components"} {

@@ -4,12 +4,12 @@ export DO_NOT_TRACK := "1"
 default:
     just --list
 
-# Include internal Go packages and the lint launcher after the source layout change.
+# Check Go packages and the configured Go lint aspect.
 # Run tests without parent workspace configuration or remote services.
 test:
     aspect --ignore_all_rc_files test \
     //src/... \
-    //tools/lint:golangci_test \
+    //tools/lint:golangci_clean_test //tools/lint:golangci_source_test \
     --remote_cache= --remote_executor= --bes_backend= \
     --test_output=errors
 
@@ -26,6 +26,8 @@ consumer-test:
     for fixture in owned upstream; do
         (
             cd "$fixture_root/$fixture"
+            # Consumers do not inherit development dependencies from the extension.
+            bazel --ignore_all_rc_files query '@gazelle_rules_rs//:all'
             aspect --ignore_all_rc_files run //:gazelle \
                 --remote_cache= --remote_executor= --bes_backend= -- -mode=fix .
             aspect --ignore_all_rc_files run //:gazelle \
@@ -53,7 +55,6 @@ fmt-check:
 # Check Bazel, shell, and Go policies through the same tools used by CI.
 lint:
     aspect lint-all //...
-    aspect lint-go
 
 # Check generation, format, lint, tests, and hook behavior before a push.
 check-push: go-check fmt-check lint test consumer-test git-hooks-test
@@ -120,8 +121,6 @@ pre-merge-commit: pre-commit
 _commit-lint:
     aspect lint-all --strategy=soft //... \
     || { status=$?; printf 'Warning: Lint checks failed with exit code %s. The commit can continue.\n' "$status" >&2; }
-    aspect lint-go \
-    || { status=$?; printf 'Warning: Go lint failed with exit code %s. The commit can continue.\n' "$status" >&2; }
 
 # Check generation, format, lint, extension tests, consumer tests, and hook tests before a push.
 # Git supplies the remote name, location, and reference data on `stdin`.

@@ -35,10 +35,6 @@
     "https://bcr.bazel.build/modules/aspect_rules_js/3.6.1/MODULE.bazel": "0122f440582aae03e267be24b5eda2aa4d10c9d44cdb791019f039e17323007f",
     "https://bcr.bazel.build/modules/aspect_rules_js/3.6.1/source.json": "e09386aa64b6b3223c0fa80563c0b1d636327b5d634d8abd33be120f1a0a6b67",
     "https://bcr.bazel.build/modules/aspect_rules_lint/0.12.0/MODULE.bazel": "e767c5dbfeb254ec03275a7701b5cfde2c4d2873676804bc7cb27ddff3728fed",
-    "https://bcr.bazel.build/modules/aspect_rules_lint/2.9.1/MODULE.bazel": "d1c3d0495ca1b83b01349ed62b1c3c8e14494df7186e5937ba07369594e8b18b",
-    "https://bcr.bazel.build/modules/aspect_rules_lint/2.9.1/source.json": "6c7d6bbcad2717fda2bafb8c429a30e4fbb6d5fafdf19f58a4a90d86f25fd6b0",
-    "https://bcr.bazel.build/modules/aspect_tools_telemetry/0.5.0/MODULE.bazel": "ba637a3c23e2713a14b946f1cf218f5575239fb0002bf97a8ec390dd35f6f98e",
-    "https://bcr.bazel.build/modules/aspect_tools_telemetry/0.5.0/source.json": "04c08aaeb2b2405473917bb18d9273b8fb80733882ad1336707e43b38b3fc62d",
     "https://bcr.bazel.build/modules/bazel_features/0.1.0/MODULE.bazel": "47011d645b0f949f42ee67f2e8775188a9cf4a0a1528aa2fa4952f2fd00906fd",
     "https://bcr.bazel.build/modules/bazel_features/1.0.0/MODULE.bazel": "d7f022dc887efb96e1ee51cec7b2e48d41e36ff59a6e4f216c40e4029e1585bf",
     "https://bcr.bazel.build/modules/bazel_features/1.1.0/MODULE.bazel": "cfd42ff3b815a5f39554d97182657f8c4b9719568eb7fded2b9135f084bf760b",
@@ -73,7 +69,8 @@
     "https://bcr.bazel.build/modules/bazel_lib/3.0.0/MODULE.bazel": "22b70b80ac89ad3f3772526cd9feee2fa412c2b01933fea7ed13238a448d370d",
     "https://bcr.bazel.build/modules/bazel_lib/3.2.2/MODULE.bazel": "e2c890c8a515d6bca9c66d47718aa9e44b458fde64ec7204b8030bf2d349058c",
     "https://bcr.bazel.build/modules/bazel_lib/3.7.0/MODULE.bazel": "d7c10ed67f0f7f1fda179db8f86c22642581bd614882e1a50545fbe069525173",
-    "https://bcr.bazel.build/modules/bazel_lib/3.7.0/source.json": "cdacdbe1a504593475889158a96acf3ec3fb6be5cac2fb7b201ba5c6beacd9d4",
+    "https://bcr.bazel.build/modules/bazel_lib/3.8.0/MODULE.bazel": "ac892a5b9b1d6b755c915f1e82663cb71ebffb4183d57f95c6507fafc2cac53a",
+    "https://bcr.bazel.build/modules/bazel_lib/3.8.0/source.json": "45eb621b9efa8fbc4c1c9f2ea484fc0e330558a1d8e120b063f7463363adc854",
     "https://bcr.bazel.build/modules/bazel_skylib/1.0.3/MODULE.bazel": "bcb0fd896384802d1ad283b4e4eb4d718eebd8cb820b0a2c3a347fb971afd9d8",
     "https://bcr.bazel.build/modules/bazel_skylib/1.1.1/MODULE.bazel": "1add3e7d93ff2e6998f9e118022c84d163917d912f5afafb3058e3d2f1545b5e",
     "https://bcr.bazel.build/modules/bazel_skylib/1.2.0/MODULE.bazel": "44fe84260e454ed94ad326352a698422dbe372b21a1ac9f3eab76eb531223686",
@@ -109,6 +106,9 @@
     "https://bcr.bazel.build/modules/gazelle/0.33.0/MODULE.bazel": "a13a0f279b462b784fb8dd52a4074526c4a2afe70e114c7d09066097a46b3350",
     "https://bcr.bazel.build/modules/gazelle/0.34.0/MODULE.bazel": "abdd8ce4d70978933209db92e436deb3a8b737859e9354fb5fd11fb5c2004c8a",
     "https://bcr.bazel.build/modules/gazelle/0.36.0/MODULE.bazel": "e375d5d6e9a6ca59b0cb38b0540bc9a05b6aa926d322f2de268ad267a2ee74c0",
+    "https://bcr.bazel.build/modules/gazelle/0.40.0/MODULE.bazel": "42ba5378ebe845fca43989a53186ab436d956db498acde790685fe0e8f9c6146",
+    "https://bcr.bazel.build/modules/gazelle/0.43.0/MODULE.bazel": "846e1fe396eefc0f9ddad2b33e9bd364dd993fc2f42a88e31590fe0b0eefa3f0",
+    "https://bcr.bazel.build/modules/gazelle/0.45.0/MODULE.bazel": "ecd19ebe9f8e024e1ccffb6d997cc893a974bcc581f1ae08f386bdd448b10687",
     "https://bcr.bazel.build/modules/gazelle/0.51.3/MODULE.bazel": "618a729142f66de1e2cb776d026413763be5b80d5e3d29ffb9d3d90c5defde90",
     "https://bcr.bazel.build/modules/gazelle/2.0.0-beta.2/MODULE.bazel": "e62143385fa87704b52ae088c8d3d28cc7d40b074a017fd0a2f799e528370fb7",
     "https://bcr.bazel.build/modules/gazelle/2.0.0-beta.2/source.json": "0155e4d6a576e31490317310fe7ecf09f6aa6b5cad82e053815f37c57ebb58e4",
@@ -183,8 +183,8 @@
     "https://bcr.bazel.build/modules/rules_apple/4.1.0/MODULE.bazel": "76e10fd4a48038d3fc7c5dc6e63b7063bbf5304a2e3bd42edda6ec660eebea68",
     "https://bcr.bazel.build/modules/rules_apple/4.1.0/source.json": "8ee81e1708756f81b343a5eb2b2f0b953f1d25c4ab3d4a68dc02754872e80715",
     "https://bcr.bazel.build/modules/rules_buf/0.1.1/MODULE.bazel": "6189aec18a4f7caff599ad41b851ab7645d4f1e114aa6431acf9b0666eb92162",
-    "https://bcr.bazel.build/modules/rules_buf/0.5.2/MODULE.bazel": "5f2492d284ab9bedf2668178303abf5f3cd7d8cdf85d768951008e88456e9c6a",
-    "https://bcr.bazel.build/modules/rules_buf/0.5.2/source.json": "41876d4834c0832de4b393de6e55dfd1cb3b25d3109e4ba90eb7fb57c560e0d9",
+    "https://bcr.bazel.build/modules/rules_buf/0.5.4/MODULE.bazel": "735754ce5c8ed7ddf38201b8d937cc8f055dd7218e8a7c0d5b2b539d9cc66e44",
+    "https://bcr.bazel.build/modules/rules_buf/0.5.4/source.json": "b8a3f87ad9d763749d0c00f6eb9d58119fd1ad6219f604dab49424e93322d65a",
     "https://bcr.bazel.build/modules/rules_cc/0.0.1/MODULE.bazel": "cb2aa0747f84c6c3a78dad4e2049c154f08ab9d166b1273835a8174940365647",
     "https://bcr.bazel.build/modules/rules_cc/0.0.10/MODULE.bazel": "ec1705118f7eaedd6e118508d3d26deba2a4e76476ada7e0e3965211be012002",
     "https://bcr.bazel.build/modules/rules_cc/0.0.13/MODULE.bazel": "0e8529ed7b323dad0775ff924d2ae5af7640b23553dfcd4d34344c7e7a867191",
@@ -218,7 +218,10 @@
     "https://bcr.bazel.build/modules/rules_go/0.41.0/MODULE.bazel": "55861d8e8bb0e62cbd2896f60ff303f62ffcb0eddb74ecb0e5c0cbe36fc292c8",
     "https://bcr.bazel.build/modules/rules_go/0.42.0/MODULE.bazel": "8cfa875b9aa8c6fce2b2e5925e73c1388173ea3c32a0db4d2b4804b453c14270",
     "https://bcr.bazel.build/modules/rules_go/0.46.0/MODULE.bazel": "3477df8bdcc49e698b9d25f734c4f3a9f5931ff34ee48a2c662be168f5f2d3fd",
+    "https://bcr.bazel.build/modules/rules_go/0.50.1/MODULE.bazel": "b91a308dc5782bb0a8021ad4330c81fea5bda77f96b9e4c117b9b9c8f6665ee0",
+    "https://bcr.bazel.build/modules/rules_go/0.53.0/MODULE.bazel": "a4ed760d3ac0dbc0d7b967631a9a3fd9100d28f7d9fcf214b4df87d4bfff5f9a",
     "https://bcr.bazel.build/modules/rules_go/0.59.0/MODULE.bazel": "b7e43e7414a3139a7547d1b4909b29085fbe5182b6c58cbe1ed4c6272815aeae",
+    "https://bcr.bazel.build/modules/rules_go/0.61.0/MODULE.bazel": "aeccf0e379a7144723596766d3a56bebcdfc15362bd64e34601a67260c6f7ccd",
     "https://bcr.bazel.build/modules/rules_go/0.62.0/MODULE.bazel": "8ee616065c3d2b2f7ac0880108316ce8d0c332b3a30aad24e95c0bc124ec853e",
     "https://bcr.bazel.build/modules/rules_go/0.65.0/MODULE.bazel": "9aedb8cc7186d99881b438b545334e6c8ea38619a43b79b4240d1181d5e88abe",
     "https://bcr.bazel.build/modules/rules_go/0.65.0/source.json": "36eb4ae1387d5f910968c277de3f8d91627c7b3a321f3b3de166ea7014fd00f3",
@@ -260,7 +263,7 @@
     "https://bcr.bazel.build/modules/rules_multitool/0.11.0/MODULE.bazel": "8d9dda78d2398e136300d3ef4fbcc89ede7c32c158d8c016fa7d032df41c4aaf",
     "https://bcr.bazel.build/modules/rules_multitool/0.11.0/source.json": "0b86574a1eaff37c33aafaff095ea16d6ac846beb94ffc74c4fcf626f8f80681",
     "https://bcr.bazel.build/modules/rules_nodejs/5.8.2/MODULE.bazel": "6bc03c8f37f69401b888023bf511cb6ee4781433b0cb56236b2e55a21e3a026a",
-    "https://bcr.bazel.build/modules/rules_nodejs/6.7.3/MODULE.bazel": "c22a48b2a0dbf05a9dc5f83837bbc24c226c1f6e618de3c3a610044c9f336056",
+    "https://bcr.bazel.build/modules/rules_nodejs/6.7.4/MODULE.bazel": "e6a241a55c82e999145553d2e00a08fc6ebadf62b63d108fb5e984696ffd0bd2",
     "https://bcr.bazel.build/modules/rules_nodejs/6.7.7/MODULE.bazel": "e80c95eebba3e38fa28ea0553ec580e4bffbbe8d0e8fa892457fa0e6b616f3d8",
     "https://bcr.bazel.build/modules/rules_nodejs/6.7.7/source.json": "60081c2448d70db3c5c0e75f55c0a55a22b2144646c21977c46c4986dacacdb6",
     "https://bcr.bazel.build/modules/rules_pkg/0.7.0/MODULE.bazel": "df99f03fc7934a4737122518bb87e667e62d780b610910f0447665a7e2be62dc",
@@ -269,6 +272,7 @@
     "https://bcr.bazel.build/modules/rules_proto/4.0.0/MODULE.bazel": "a7a7b6ce9bee418c1a760b3d84f83a299ad6952f9903c67f19e4edd964894e06",
     "https://bcr.bazel.build/modules/rules_proto/5.3.0-21.7/MODULE.bazel": "e8dff86b0971688790ae75528fe1813f71809b5afd57facb44dad9e8eca631b7",
     "https://bcr.bazel.build/modules/rules_proto/6.0.0-rc1/MODULE.bazel": "1e5b502e2e1a9e825eef74476a5a1ee524a92297085015a052510b09a1a09483",
+    "https://bcr.bazel.build/modules/rules_proto/6.0.0/MODULE.bazel": "b531d7f09f58dce456cd61b4579ce8c86b38544da75184eadaf0a7cb7966453f",
     "https://bcr.bazel.build/modules/rules_proto/6.0.2/MODULE.bazel": "ce916b775a62b90b61888052a416ccdda405212b6aaeb39522f7dc53431a5e73",
     "https://bcr.bazel.build/modules/rules_proto/7.0.2/MODULE.bazel": "bf81793bd6d2ad89a37a40693e56c61b0ee30f7a7fdbaf3eabbf5f39de47dea2",
     "https://bcr.bazel.build/modules/rules_proto/7.1.0/MODULE.bazel": "002d62d9108f75bb807cd56245d45648f38275cb3a99dcd45dfb864c5d74cb96",
@@ -341,33 +345,6 @@
   },
   "selectedYankedVersions": {},
   "moduleExtensions": {
-    "@@aspect_tools_telemetry+//:extension.bzl%telemetry": {
-      "general": {
-        "bzlTransitiveDigest": "XVKR7Fz0TpsBTBIjxfUrpsRKdh9a5XZHQEJmfRGJOD8=",
-        "usagesDigest": "R2i/GcL9Yp1TqysZvBrvDsWHHkt0vZuJkFPiZg6RgF4=",
-        "recordedInputs": [
-          "REPO_MAPPING:aspect_tools_telemetry+,bazel_lib bazel_lib+",
-          "REPO_MAPPING:aspect_tools_telemetry+,bazel_skylib bazel_skylib+",
-          "ENV:ASPECT_TOOLS_TELEMETRY_TEST \\0"
-        ],
-        "generatedRepoSpecs": {
-          "aspect_tools_telemetry_report": {
-            "repoRuleId": "@@aspect_tools_telemetry+//:extension.bzl%tel_repository",
-            "attributes": {
-              "deps": {
-                "aspect_rules_lint": "2.9.1",
-                "aspect_tools_telemetry": "0.5.0"
-              },
-              "last_notice": 0
-            }
-          }
-        },
-        "moduleExtensionMetadata": {
-          "useAllRepos": "NO",
-          "reproducible": false
-        }
-      }
-    },
     "@@pybind11_bazel+//:internal_configure.bzl%internal_configure_extension": {
       "general": {
         "bzlTransitiveDigest": "BsgERqYptkJeeC8wFaLj251IoTZTSy/58WA6kVp0q8I=",
@@ -392,8 +369,8 @@
     },
     "@@rules_buf+//buf:extensions.bzl%buf": {
       "general": {
-        "bzlTransitiveDigest": "tQHciQbZBDtHAn0xVQX53tmNmPzxzLDgQIJ9liFXdxM=",
-        "usagesDigest": "vxN6C2h72rUERbAmd1476FWpxdxo1NhYoY5JSFXJT3g=",
+        "bzlTransitiveDigest": "hb1ZKLNRx7AnhgftOwNRaO75TIWBlBWVwMweZWgccNY=",
+        "usagesDigest": "5uMICEDbDRnRYbApnq7+HC+26Vac1KBWulso37GohHc=",
         "recordedInputs": [
           "REPO_MAPPING:rules_buf+,bazel_tools bazel_tools"
         ],
@@ -468,7 +445,7 @@
     "@@rules_multitool+//multitool:extension.bzl%multitool": {
       "general": {
         "bzlTransitiveDigest": "tk5FazsYGLghtEXMLWecFfePUNVIynHMyTW2xquPHFk=",
-        "usagesDigest": "SrPW/7S5cPCFU/aBTjncJPBVfspfbKrn+DTtv5DBo1Q=",
+        "usagesDigest": "/Pon9m406twl5MuHCfyWxNtVpbMfTEXkaSwDE+D0JK0=",
         "recordedInputs": [
           "REPO_MAPPING:bazel_features+,bazel_features_globals bazel_features++version_extension+bazel_features_globals",
           "REPO_MAPPING:bazel_features+,bazel_features_version bazel_features++version_extension+bazel_features_version",
@@ -479,8 +456,9 @@
             "repoRuleId": "@@rules_multitool+//multitool/private:multitool.bzl%_env_specific_tools",
             "attributes": {
               "lockfiles": [
-                "@@aspect_rules_lint+//format:multitool.lock.json",
-                "@@aspect_rules_lint+//lint:multitool.lock.json"
+                "@@rules_lint+//format:multitool.lock.json",
+                "@@rules_lint+//lint:multitool.lock.json",
+                "@@//tools/lint:multitool.lock.json"
               ],
               "os": "linux",
               "cpu": "arm64"
@@ -490,8 +468,9 @@
             "repoRuleId": "@@rules_multitool+//multitool/private:multitool.bzl%_env_specific_tools",
             "attributes": {
               "lockfiles": [
-                "@@aspect_rules_lint+//format:multitool.lock.json",
-                "@@aspect_rules_lint+//lint:multitool.lock.json"
+                "@@rules_lint+//format:multitool.lock.json",
+                "@@rules_lint+//lint:multitool.lock.json",
+                "@@//tools/lint:multitool.lock.json"
               ],
               "os": "linux",
               "cpu": "x86_64"
@@ -501,8 +480,9 @@
             "repoRuleId": "@@rules_multitool+//multitool/private:multitool.bzl%_env_specific_tools",
             "attributes": {
               "lockfiles": [
-                "@@aspect_rules_lint+//format:multitool.lock.json",
-                "@@aspect_rules_lint+//lint:multitool.lock.json"
+                "@@rules_lint+//format:multitool.lock.json",
+                "@@rules_lint+//lint:multitool.lock.json",
+                "@@//tools/lint:multitool.lock.json"
               ],
               "os": "macos",
               "cpu": "arm64"
@@ -512,8 +492,9 @@
             "repoRuleId": "@@rules_multitool+//multitool/private:multitool.bzl%_env_specific_tools",
             "attributes": {
               "lockfiles": [
-                "@@aspect_rules_lint+//format:multitool.lock.json",
-                "@@aspect_rules_lint+//lint:multitool.lock.json"
+                "@@rules_lint+//format:multitool.lock.json",
+                "@@rules_lint+//lint:multitool.lock.json",
+                "@@//tools/lint:multitool.lock.json"
               ],
               "os": "macos",
               "cpu": "x86_64"
@@ -523,8 +504,9 @@
             "repoRuleId": "@@rules_multitool+//multitool/private:multitool.bzl%_env_specific_tools",
             "attributes": {
               "lockfiles": [
-                "@@aspect_rules_lint+//format:multitool.lock.json",
-                "@@aspect_rules_lint+//lint:multitool.lock.json"
+                "@@rules_lint+//format:multitool.lock.json",
+                "@@rules_lint+//lint:multitool.lock.json",
+                "@@//tools/lint:multitool.lock.json"
               ],
               "os": "windows",
               "cpu": "arm64"
@@ -534,8 +516,9 @@
             "repoRuleId": "@@rules_multitool+//multitool/private:multitool.bzl%_env_specific_tools",
             "attributes": {
               "lockfiles": [
-                "@@aspect_rules_lint+//format:multitool.lock.json",
-                "@@aspect_rules_lint+//lint:multitool.lock.json"
+                "@@rules_lint+//format:multitool.lock.json",
+                "@@rules_lint+//lint:multitool.lock.json",
+                "@@//tools/lint:multitool.lock.json"
               ],
               "os": "windows",
               "cpu": "x86_64"
@@ -545,8 +528,9 @@
             "repoRuleId": "@@rules_multitool+//multitool/private:multitool.bzl%_multitool_hub",
             "attributes": {
               "lockfiles": [
-                "@@aspect_rules_lint+//format:multitool.lock.json",
-                "@@aspect_rules_lint+//lint:multitool.lock.json"
+                "@@rules_lint+//format:multitool.lock.json",
+                "@@rules_lint+//lint:multitool.lock.json",
+                "@@//tools/lint:multitool.lock.json"
               ]
             }
           }
@@ -905,9 +889,6 @@
     }
   },
   "facts": {
-    "@@aspect_tools_telemetry+//:extension.bzl%telemetry": {
-      "notice_version": "2"
-    },
     "@@gazelle+//:extensions.bzl%go_deps": {
       "required_mod_files_v1": [
         {
@@ -1116,6 +1097,86 @@
           "version": "v1.67.3"
         },
         {
+          "importpath": "github.com/onsi/gomega",
+          "sha256": "f2a2f2b30ffe5ba36a977232e07f9156b882d4ccb073e26f770b7136274899f3",
+          "version": "v1.37.0"
+        },
+        {
+          "importpath": "github.com/reviewdog/errorformat",
+          "sha256": "fa439621164cb36542f8f0b1e894827095827e146dcd1e40385183b97fa5952d",
+          "version": "v0.0.0-20261111071206-96826ccdd0bd"
+        },
+        {
+          "importpath": "golang.org/x/tools",
+          "sha256": "5be696f88fba87769d3912f87af6e800858e85ba4b3b0b599870926492114a9e",
+          "version": "v0.34.0"
+        },
+        {
+          "importpath": "github.com/google/go-cmp",
+          "sha256": "31c874a1d2a18e62b0550f823ce7a575c8dec7f8fd9d4fa1959bb12d7f7c0f14",
+          "version": "v0.7.0"
+        },
+        {
+          "importpath": "github.com/haya14busa/go-checkstyle",
+          "sha256": "22bd9a548fa461d017ab0e647345dfa86acee01041ed73195f9589a768cbc391",
+          "version": "v0.0.0-20170303121022-5e9d09f51fa1"
+        },
+        {
+          "importpath": "github.com/haya14busa/go-sarif",
+          "sha256": "c3670c6ef0755d54539ce94145c0f35935da222871ee9a39b40d4066be6b14c7",
+          "version": "v0.0.0-20240630170108-a3ba8d79599f"
+        },
+        {
+          "importpath": "golang.org/x/mod",
+          "sha256": "1fb8ad2f7201cd79bf178578b35aaead1720cab2b8cfea35b99b25b60839f1ef",
+          "version": "v0.25.0"
+        },
+        {
+          "importpath": "golang.org/x/net",
+          "sha256": "bad88fe7380902f8265aa65ebe9a5228451626d705d8e59b90be07b0c4498883",
+          "version": "v0.41.0"
+        },
+        {
+          "importpath": "golang.org/x/sync",
+          "sha256": "720b98f1bf033d6b64a454ca8c29cdca6e9265ab7d70db3b834dff49560f1587",
+          "version": "v0.15.0"
+        },
+        {
+          "importpath": "golang.org/x/text",
+          "sha256": "178b8e330288183eabcb6e776a3f01099b5926661fc866b750acec7cb8402dc2",
+          "version": "v0.26.0"
+        },
+        {
+          "importpath": "gopkg.in/yaml.v3",
+          "sha256": "21579860a20306fcf43b1bd234d1fba319499c77611b71c05f9bf3ba90dab939",
+          "version": "v3.0.1"
+        },
+        {
+          "importpath": "github.com/bazelbuild/bazel-gazelle",
+          "sha256": "2b964d2b7715ca576e1bbe3a310b29f3eb08fd4fc9c36212b486ce4110a9ca1f",
+          "version": "v0.40.0"
+        },
+        {
+          "importpath": "github.com/bazelbuild/buildtools",
+          "sha256": "85e60cfccacc5e14a84b15b4187fb2b23e8a1ad87207465c2587644330f500a1",
+          "version": "v0.0.0-20260319080235-05d2ebe49b0f"
+        },
+        {
+          "importpath": "github.com/stretchr/testify",
+          "sha256": "05e26cd069285a33cf2af46fdacdef569d5ae185e7963a76c0178328f68e97f9",
+          "version": "v1.8.4"
+        },
+        {
+          "importpath": "github.com/davecgh/go-spew",
+          "sha256": "bcb29393251237b79a17b6c19bf29134f43e8f438c3198988fcd461a1cdf05cc",
+          "version": "v1.1.1"
+        },
+        {
+          "importpath": "gopkg.in/check.v1",
+          "sha256": "6e6e2fca40eb8fe1455e6a08cd39833c7c2e9a2341a81fb181b89d0b1c725f48",
+          "version": "v1.0.0-20201130134442-10cb98267c6c"
+        },
+        {
           "importpath": "github.com/bazelbuild/bazel-gazelle",
           "sha256": "9ae159a385b2f244bbe964b9f91dbea6e7bd534e0b22e846655f241c65de2c49",
           "version": "v0.34.0"
@@ -1131,21 +1192,6 @@
           "version": "v0.42.0"
         },
         {
-          "importpath": "github.com/stretchr/testify",
-          "sha256": "05e26cd069285a33cf2af46fdacdef569d5ae185e7963a76c0178328f68e97f9",
-          "version": "v1.8.4"
-        },
-        {
-          "importpath": "gopkg.in/yaml.v3",
-          "sha256": "21579860a20306fcf43b1bd234d1fba319499c77611b71c05f9bf3ba90dab939",
-          "version": "v3.0.1"
-        },
-        {
-          "importpath": "github.com/davecgh/go-spew",
-          "sha256": "bcb29393251237b79a17b6c19bf29134f43e8f438c3198988fcd461a1cdf05cc",
-          "version": "v1.1.1"
-        },
-        {
           "importpath": "golang.org/x/mod",
           "sha256": "5c4ac0310a25330757039ccf3a98e75fefdbcb7d444ddd049230003a44945bde",
           "version": "v0.14.0"
@@ -1154,11 +1200,6 @@
           "importpath": "golang.org/x/sys",
           "sha256": "d227b325f621f4ebe28d39ba773ea99b870f393b7c09c34592c365b16dd560de",
           "version": "v0.14.0"
-        },
-        {
-          "importpath": "gopkg.in/check.v1",
-          "sha256": "6e6e2fca40eb8fe1455e6a08cd39833c7c2e9a2341a81fb181b89d0b1c725f48",
-          "version": "v1.0.0-20201130134442-10cb98267c6c"
         },
         {
           "importpath": "github.com/bazelbuild/bazel-gazelle",
@@ -1786,11 +1827,6 @@
           "version": "v1.2.2"
         },
         {
-          "importpath": "github.com/google/go-cmp",
-          "sha256": "31c874a1d2a18e62b0550f823ce7a575c8dec7f8fd9d4fa1959bb12d7f7c0f14",
-          "version": "v0.7.0"
-        },
-        {
           "importpath": "github.com/google/uuid",
           "sha256": "73da47b6338b00a082fd451aa35a3273d3adc09b8e9bba98dab01091e402af6e",
           "version": "v1.6.0"
@@ -1914,10 +1950,191 @@
           "importpath": "github.com/dlclark/regexp2",
           "sha256": "7017e81fb9fa9227a3180a62e323158b4523c67062f0a8aa08637c092b8d4aa7",
           "version": "v1.11.0"
+        },
+        {
+          "importpath": "github.com/go-task/slim-sprig/v3",
+          "sha256": "60d8053fb51eef51ba227e2f65038ee559ed68df7430e63d11314237a1180fdc",
+          "version": "v3.0.0"
+        },
+        {
+          "importpath": "github.com/google/pprof",
+          "sha256": "7dea279f404a35abdec0b4ffc418a33b9d5da49aa68913201c35f52e2ad0f424",
+          "version": "v0.0.0-20241210010833-40e02aabc2ad"
+        },
+        {
+          "importpath": "github.com/onsi/ginkgo/v2",
+          "sha256": "c69d37be0027b5d07159a72b74e9ee0b271ee26cee822cde53210f662f43379e",
+          "version": "v2.23.3"
         }
       ]
     },
     "@@rules_go+//go:extensions.bzl%go_sdk": {
+      "1.23.9": {
+        "aix_ppc64": [
+          "go1.23.9.aix-ppc64.tar.gz",
+          "3c4c4a52914a9114222a65d6c3abcc5521a3e9f4502da4c5bfc4f695c77c6b6f"
+        ],
+        "darwin_amd64": [
+          "go1.23.9.darwin-amd64.tar.gz",
+          "50200cba5173100a6e880098cf3b2db4063394beaf7374e9766b6c19bb18012d"
+        ],
+        "darwin_arm64": [
+          "go1.23.9.darwin-arm64.tar.gz",
+          "2bf624b6399e41248255858b2d61abae2703eecafad39808449951f3f1ab3766"
+        ],
+        "dragonfly_amd64": [
+          "go1.23.9.dragonfly-amd64.tar.gz",
+          "410dd1af74133452bcc0f7380b000362ead267ca02bcdae1b82416e0582b02a2"
+        ],
+        "freebsd_386": [
+          "go1.23.9.freebsd-386.tar.gz",
+          "2ec88ecebd609768d0b2a19f5ae6df333f60e7ae1b06dab3562d21ac41d2f837"
+        ],
+        "freebsd_amd64": [
+          "go1.23.9.freebsd-amd64.tar.gz",
+          "d939dd297a4ced4999147be03c22e3b667cee5479078373ed7bf7ccd1a777c83"
+        ],
+        "freebsd_arm": [
+          "go1.23.9.freebsd-arm.tar.gz",
+          "790e8b5d83b509ee3b5c3abd1dbc90aa72348ade2b1e10fb702242ee4e42f3ac"
+        ],
+        "freebsd_arm64": [
+          "go1.23.9.freebsd-arm64.tar.gz",
+          "a2d01870891f9bd531e3ac4b9a1a0768fb9c3aeab69986f79d965ddb618b5c1a"
+        ],
+        "freebsd_riscv64": [
+          "go1.23.9.freebsd-riscv64.tar.gz",
+          "eec460900861c9386556e56ac256ba0e86ed87dfe00930ed1a0a485871e1f1ae"
+        ],
+        "illumos_amd64": [
+          "go1.23.9.illumos-amd64.tar.gz",
+          "7bee8b04ff2406272dc6ba27f7423ba0720bf5181dd01fcda20322e755d29a1a"
+        ],
+        "linux_386": [
+          "go1.23.9.linux-386.tar.gz",
+          "9145095dead1209fd4ce554cd5a18ac42861b168efcd849faf85b8639782f0f9"
+        ],
+        "linux_amd64": [
+          "go1.23.9.linux-amd64.tar.gz",
+          "de03e45d7a076c06baaa9618d42b3b6a0561125b87f6041c6397680a71e5bb26"
+        ],
+        "linux_arm64": [
+          "go1.23.9.linux-arm64.tar.gz",
+          "3dc4dd64bdb0275e3ec65a55ecfc2597009c7c46a1b256eefab2f2172a53a602"
+        ],
+        "linux_armv6l": [
+          "go1.23.9.linux-armv6l.tar.gz",
+          "ade33880caacb8919b48767e0957e9880f2cdf634e137402a6f22552504136dd"
+        ],
+        "linux_loong64": [
+          "go1.23.9.linux-loong64.tar.gz",
+          "50b08d8b3a7fb027608db01ff63152001b33710b2ec9acad995adbb63bd8a02a"
+        ],
+        "linux_mips": [
+          "go1.23.9.linux-mips.tar.gz",
+          "f467012d9ce5e43744f3dd1a351c71e3f9990c543c7ab5e6775846cedd09e0b6"
+        ],
+        "linux_mips64": [
+          "go1.23.9.linux-mips64.tar.gz",
+          "23486ac0530ea88e8ca88a3e286c51922fdc21a40ac9f0eeed1ee2b35acce940"
+        ],
+        "linux_mips64le": [
+          "go1.23.9.linux-mips64le.tar.gz",
+          "fef65b253a2339453249bb90c65b02a2eb7a2c3c788b941fbc2a10a0eb9f41b2"
+        ],
+        "linux_mipsle": [
+          "go1.23.9.linux-mipsle.tar.gz",
+          "d29059c2e82d4a655c5e4135436358ea41cc98e5584a18bb6085404950c65cd4"
+        ],
+        "linux_ppc64": [
+          "go1.23.9.linux-ppc64.tar.gz",
+          "ed52941d8779cbea9579eccc20fc16e03de9f1b4a78ac3dded4d1fa61d87cff7"
+        ],
+        "linux_ppc64le": [
+          "go1.23.9.linux-ppc64le.tar.gz",
+          "4e23059029552ece0f37e626208caacfe088b7178409797be75280f6e850e98b"
+        ],
+        "linux_riscv64": [
+          "go1.23.9.linux-riscv64.tar.gz",
+          "e9027dfeb00a482271c2d068d2d0fd5d75aa5b49fa86542d8409cac3cd0c977f"
+        ],
+        "linux_s390x": [
+          "go1.23.9.linux-s390x.tar.gz",
+          "25e7cb524f97f52369b6162e2440c87be128ed8e9ad9bd076e0706bba4f73817"
+        ],
+        "netbsd_386": [
+          "go1.23.9.netbsd-386.tar.gz",
+          "9d76093db116645e1a649b6b6b179c85e83832622958405c0e4420a4466c755b"
+        ],
+        "netbsd_amd64": [
+          "go1.23.9.netbsd-amd64.tar.gz",
+          "12594b9f0fa3e1111b85acd75977d29244fcf371c901fc915115ccf1a44cae44"
+        ],
+        "netbsd_arm": [
+          "go1.23.9.netbsd-arm.tar.gz",
+          "25d2a58a0c7692aeedaa30e3164ed197a5f5e75f6a483c16d4a2691bb5872c4f"
+        ],
+        "netbsd_arm64": [
+          "go1.23.9.netbsd-arm64.tar.gz",
+          "43c32a4a190453dc63254e1a57d4c283cfffef967ec0c2e2672b4e570437fe12"
+        ],
+        "openbsd_386": [
+          "go1.23.9.openbsd-386.tar.gz",
+          "d54729b2e4ba99d39cfbfe7be2811b3762dd4d58afa532d2817582df85b096c9"
+        ],
+        "openbsd_amd64": [
+          "go1.23.9.openbsd-amd64.tar.gz",
+          "2c973ca79fcad9c7f993d89231563ea91e058adc5c42466c568518e678154303"
+        ],
+        "openbsd_arm": [
+          "go1.23.9.openbsd-arm.tar.gz",
+          "254e43c6b0337076db5da6ab4da7a4f5b3ee9ff63e13e862a0ab5d92fb290f97"
+        ],
+        "openbsd_arm64": [
+          "go1.23.9.openbsd-arm64.tar.gz",
+          "073b1a196f6277aaf6f58d6d8cf5a874e122481b90bd3b22136f8c3e4f3a2b74"
+        ],
+        "openbsd_ppc64": [
+          "go1.23.9.openbsd-ppc64.tar.gz",
+          "90294d4138c8893eaf36e545c1817bf5a4bc6b0483890b84556b9a8ec52b49e9"
+        ],
+        "openbsd_riscv64": [
+          "go1.23.9.openbsd-riscv64.tar.gz",
+          "4a9cadff5543bc2f3fa21c24050a38234710a32ab59a282d96a104dddf8f71f5"
+        ],
+        "plan9_386": [
+          "go1.23.9.plan9-386.tar.gz",
+          "fb3bea9e9f35bc7fba57f4419d5c49feb1922b85ae59fc9d3fd4d16e6f4ab4e7"
+        ],
+        "plan9_amd64": [
+          "go1.23.9.plan9-amd64.tar.gz",
+          "124e00f3394ce3a8af8e6fba4f68a87293501d703fa712e1bfb9c66efd1ddb39"
+        ],
+        "plan9_arm": [
+          "go1.23.9.plan9-arm.tar.gz",
+          "76a89a0ed9cd27f36c10121a3d29d0e287c93e61fe2c36ef8e9320e895fe414d"
+        ],
+        "solaris_amd64": [
+          "go1.23.9.solaris-amd64.tar.gz",
+          "417c35d0cc09bbaadb360738a9731018dcef9bd38247ba5a55d742546b791a70"
+        ],
+        "windows_386": [
+          "go1.23.9.windows-386.zip",
+          "1c2c713161a46012fbe46e46cd3d13b1f14330eea1713507ce065845ecae3d48"
+        ],
+        "windows_amd64": [
+          "go1.23.9.windows-amd64.zip",
+          "16409aa244b672de037389e9e39115cbf82633e5fa0d4db6ec1a9191ca00a1e1"
+        ],
+        "windows_arm": [
+          "go1.23.9.windows-arm.zip",
+          "30b775108eb7a716804c209cab4cc6e0e7e10f2cbf1483e1cb5da5b4215b98ba"
+        ],
+        "windows_arm64": [
+          "go1.23.9.windows-arm64.zip",
+          "a6cccd938dea6c24b7277be5d70cae2d4c2893ae41db72aad55be1915710bdca"
+        ]
+      },
       "1.26.7": {
         "aix_ppc64": [
           "go1.26.7.aix-ppc64.tar.gz",

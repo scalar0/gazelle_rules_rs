@@ -1,3 +1,5 @@
+"""Benchmark targets for the project consumer fixture."""
+
 BENCHMARK_TARGETS = [
     "//:tests/bench/lib",
     "//crates/build-support:tests/bench/lib",

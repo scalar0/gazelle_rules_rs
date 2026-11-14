@@ -196,11 +196,6 @@ func (e *extension) Generate(ctx context.Context, args language.GenerateArgs) (l
 	return result, nil
 }
 
-// Reconcile returns merge inputs for marked rules and rejects handwritten name conflicts.
-func reconcile(file *rule.File, rules []*rule.Rule) (language.GenerateResult, error) {
-	return reconcileKinds(file, rules, kindMap())
-}
-
 func reconcileKinds(file *rule.File, rules []*rule.Rule, kinds map[string]rule.KindInfo) (language.GenerateResult, error) {
 	result := language.GenerateResult{Gen: rules, Imports: make([]interface{}, len(rules))}
 	names := map[string]*rule.Rule{}

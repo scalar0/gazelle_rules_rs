@@ -1,0 +1,10 @@
+# gazelle:ignore
+load("@rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "lib",
+    srcs = ["value.go"],
+    importpath = "lint.test/right",
+    tags = ["manual"],
+    visibility = ["//tools/lint/testdata:__pkg__"],
+)

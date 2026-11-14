@@ -1,13 +1,9 @@
 load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
-load("@npm//:defs.bzl", "npm_link_all_packages")
 load(":rustc.bzl", "rustc_runfiles")
-
-npm_link_all_packages(name = "node_modules")
 
 exports_files([
     "cargo.MODULE.bazel",
     "fixtures.MODULE.bazel",
-    "go-lint.MODULE.bazel",
     ".golangci.yml",
     "config.bzl",
     "testdata/patches/manifest-workspace.patch",

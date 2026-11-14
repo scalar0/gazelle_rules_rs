@@ -319,7 +319,9 @@ CI also checks source formats, Bazel and shell policies, and Git hook behavior.
 Go code uses normal packages under `src/` and standard test filenames.
 The official Gazelle Go extension maintains Go BUILD rules.
 An internal Cargo adapter owns declared tool resolution and subprocess execution.
-Go lint uses a pinned golangci-lint release and the selected Bazel Go SDK.
+Go lint uses the upstream rules_lint aspect, a pinned golangci-lint release, and the selected Bazel Go SDK.
+The module pins rules_lint source until a stable release includes Go lint support.
+The formatter npm workspace belongs to `tools/` and does not supply consumer dependencies.
 
 Go integration tests and Rust consumer tests share the same fixture inputs.
 Bazel fetches the upstream rules_rs manifest-path fixture without vendoring its source files.
