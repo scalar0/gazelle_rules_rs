@@ -1,0 +1,44 @@
+load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
+load("@npm//:@taplo/cli/package_json.bzl", taplo_bin = "bin")
+load("@npm//:prettier/package_json.bzl", prettier_bin = "bin")
+
+prettier_bin.prettier_binary(
+    name = "prettier",
+    env = {"BAZEL_BINDIR": "."},
+)
+
+taplo_bin.taplo_binary(
+    name = "taplo",
+    env = {
+        "BAZEL_BINDIR": ".",
+        "JS_BINARY__NO_CD_BINDIR": "1",
+    },
+)
+
+format_multirun(
+    name = "format",
+    css = ":prettier",
+    go = "@aspect_rules_lint//format:gofumpt",
+    html = ":prettier",
+    javascript = ":prettier",
+    markdown = ":prettier",
+    markdown_fix_args = ["--write"],
+    rust = "@rules_rust//tools/upstream_wrapper:rustfmt",
+    shell = "@aspect_rules_lint//format:shfmt",
+    starlark = "@buildifier_prebuilt//:buildifier",
+    starlark_check_args = [
+        "-mode=check",
+        "-lint=off",
+    ],
+    toml = ":taplo",
+    visibility = ["//visibility:public"],
+    yaml = ":prettier",
+    yaml_check_args = [
+        "--check",
+        "--log-level=warn",
+    ],
+    yaml_fix_args = [
+        "--write",
+        "--log-level=warn",
+    ],
+)

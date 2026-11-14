@@ -3,7 +3,6 @@
 This extension generates Bazel rules from one Cargo workspace.
 It uses the native Gazelle v2 API and public rules_rs interfaces.
 The repository is private and has no public release.
-The [compatibility report](COMPATIBILITY.md) records the adoption requirements and test coverage.
 
 Cargo owns targets, dependencies, features, editions, and lint settings.
 The extension does not require a second target list.
@@ -181,6 +180,24 @@ The public `@gazelle_rules_rs//:cargo` target supplies the pinned generation Car
 The public `@gazelle_rules_rs//:rustc` target supplies a runfiles path manifest for the consumer's registered Rust compiler.
 Consumers can use these targets as declared test inputs.
 The public `@gazelle_rules_rs//:metadata.schema.json` target supplies the Cargo metadata schema.
+
+## Compatibility and limits
+
+The [module](MODULE.bazel) and [Cargo archive declarations](cargo.MODULE.bazel) define dependency versions and integrity hashes.
+The pinned nightly Cargo does not define the minimum Rust compiler version for consumers.
+Cargo unit graphs use an unstable interface.
+Run the full test suite after a toolchain update.
+The generator rejects unknown unit-graph versions, invalid indices, invalid roots, and cycles.
+
+Workspace members and target sources must stay inside the Bazel repository.
+Target source roots must stay inside their Cargo package.
+A canonical `rlib` supports Bazel dependency edges when Cargo requests only another library output.
+Each requested library output type gets a separate target.
+
+Bazel profiles do not reproduce every Cargo profile option.
+Manual benchmark targets use the selected Bazel compilation mode.
+Built-in unstable Rust benchmarks require a compatible nightly Rust compiler from the consumer.
+A nightly Cargo binary alone does not enable unstable compiler features.
 
 ## Development and provenance
 

@@ -6,13 +6,28 @@ default:
 
 # Run the extension tests without parent workspace configuration or remote services.
 test:
-    aspect --ignore_all_rc_files test //:rules_rs_test //:rules_rs_integration_test --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+    aspect --ignore_all_rc_files test \
+    //:rules_rs_test \
+    //:rules_rs_integration_test \
+    --remote_cache= --remote_executor= --bes_backend= \
+    --test_output=errors
 
 # Check generation and build Rust targets through an external module dependency.
 [working-directory("tests/consumer")]
 consumer-test:
-    aspect --ignore_all_rc_files gazelle --remote_cache= --remote_executor= --bes_backend= .
-    aspect --ignore_all_rc_files test //... //:root-probe-bench-test //crates/root-user:root-user-bench-test //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/probe:probe-bin-bench-test //crates/macros:macros-bench-test //crates/dynamic:dynamic-bench-test --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+    aspect --ignore_all_rc_files gazelle \
+    --remote_cache= --remote_executor= --bes_backend= .
+    aspect --ignore_all_rc_files test \
+    //... \
+    //:root-probe-bench-test \
+    //crates/root-user:root-user-bench-test \
+    //crates/probe:probe-benches/smoke \
+    //crates/probe:probe-bench-test \
+    //crates/probe:probe-bin-bench-test \
+    //crates/macros:macros-bench-test \
+    //crates/dynamic:dynamic-bench-test \
+    --remote_cache= --remote_executor= --bes_backend= \
+    --test_output=errors
 
 # Format source files through the same Aspect task used by Git hooks.
 fmt:
@@ -91,7 +106,8 @@ pre-merge-commit: pre-commit
 # Keep lint execution failures visible without blocking a commit.
 [private]
 _commit-lint:
-    aspect lint-all --strategy=soft //... || { status=$?; printf 'Warning: Lint checks failed with exit code %s. The commit can continue.\n' "$status" >&2; }
+    aspect lint-all --strategy=soft //... \
+    || { status=$?; printf 'Warning: Lint checks failed with exit code %s. The commit can continue.\n' "$status" >&2; }
 
 # Check generation, format, lint, extension tests, consumer tests, and hook tests before a push.
 # Git supplies the remote name, location, and reference data on `stdin`.

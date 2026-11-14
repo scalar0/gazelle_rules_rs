@@ -1,0 +1,2 @@
+# Keep formatter installation free of lifecycle scripts.
+onlyBuiltDependencies: []

@@ -6,19 +6,28 @@ module(
 bazel_dep(name = "platforms", version = "1.1.0")
 bazel_dep(name = "rules_go", version = "0.65.0")
 bazel_dep(name = "gazelle", version = "2.0.0-beta.2")
-bazel_dep(name = "rules_rs", version = "0.2.1")
-bazel_dep(name = "llvm", version = "0.8.26")
+bazel_dep(name = "rules_rs", version = "0.2.4")
+bazel_dep(name = "llvm", version = "0.8.27")
 
 rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
 use_repo(rules_rust, "rules_rust")
 
 go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
 go_deps.from_file(go_mod = "//:go.mod")
-use_repo(go_deps, "com_github_bazelbuild_buildtools", "com_github_pelletier_go_toml_v2", "com_github_santhosh_tekuri_jsonschema_v6")
+use_repo(
+    go_deps,
+    "com_github_bazelbuild_buildtools",
+    "com_github_pelletier_go_toml_v2",
+    "com_github_santhosh_tekuri_jsonschema_v6",
+)
 
 include("//:cargo.MODULE.bazel")
 
-toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains", dev_dependency = True)
+toolchains = use_extension(
+    "@rules_rs//rs/toolchains:module_extension.bzl",
+    "toolchains",
+    dev_dependency = True,
+)
 toolchains.toolchain(
     edition = "2024",
     version = "1.99.1",
@@ -32,9 +41,21 @@ register_toolchains(
 )
 
 # Development checks use the same tools as the source repository.
-bazel_dep(name = "aspect_rules_lint", version = "2.9.1", dev_dependency = True)
-bazel_dep(name = "buildifier_prebuilt", version = "10.1.0", dev_dependency = True)
-bazel_dep(name = "rules_shell", version = "0.8.0", dev_dependency = True)
+bazel_dep(
+    name = "aspect_rules_lint",
+    version = "2.9.1",
+    dev_dependency = True,
+)
+bazel_dep(
+    name = "buildifier_prebuilt",
+    version = "10.1.0",
+    dev_dependency = True,
+)
+bazel_dep(
+    name = "rules_shell",
+    version = "0.8.0",
+    dev_dependency = True,
+)
 
 single_version_override(
     module_name = "buildifier_prebuilt",
@@ -42,4 +63,36 @@ single_version_override(
     patches = ["//tools/lint:buildifier_prebuilt_runfiles.patch"],
 )
 
-include("//tools/format:tools.MODULE.bazel")
+# Root npm links need these rules when another module loads the root BUILD file.
+bazel_dep(name = "rules_nodejs", version = "6.7.7")
+bazel_dep(name = "aspect_rules_js", version = "3.6.1")
+
+node = use_extension(
+    "@rules_nodejs//nodejs:extensions.bzl",
+    "node",
+    dev_dependency = True,
+)
+node.toolchain(node_version = "26.13.0")
+use_repo(node, "nodejs_toolchains")
+
+register_toolchains(
+    "@nodejs_toolchains//:all",
+    dev_dependency = True,
+)
+
+pnpm = use_extension(
+    "@aspect_rules_js//npm:extensions.bzl",
+    "pnpm",
+    dev_dependency = True,
+)
+pnpm.pnpm(pnpm_version_from = "//:package.json")
+use_repo(pnpm, "pnpm")
+
+npm = use_extension("@aspect_rules_js//npm:extensions.bzl", "npm")
+npm.npm_translate_lock(
+    name = "gazelle_rules_rs_npm",
+    data = ["//:pnpm-workspace.yaml"],
+    pnpm_lock = "//:pnpm-lock.yaml",
+    update_pnpm_lock = False,
+)
+use_repo(npm, npm = "gazelle_rules_rs_npm")

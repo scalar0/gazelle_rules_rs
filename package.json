@@ -1,0 +1,9 @@
+{
+    "name": "gazelle-rules-rs",
+    "private": true,
+    "packageManager": "pnpm@12.18.0",
+    "devDependencies": {
+        "@taplo/cli": "latest",
+        "prettier": "latest"
+    }
+}

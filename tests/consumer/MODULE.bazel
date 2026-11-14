@@ -1,8 +1,12 @@
 module(name = "gazelle_rules_rs_consumer")
 
 bazel_dep(name = "platforms", version = "1.1.0")
-bazel_dep(name = "rules_rs", version = "0.2.1", repo_name = "rust_rules")
-bazel_dep(name = "llvm", version = "0.8.26")
+bazel_dep(
+    name = "rules_rs",
+    version = "0.2.4",
+    repo_name = "rust_rules",
+)
+bazel_dep(name = "llvm", version = "0.8.27")
 
 PLATFORM_TRIPLES = [
     "aarch64-apple-darwin",

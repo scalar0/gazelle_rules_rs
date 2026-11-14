@@ -1,6 +1,9 @@
 load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
+load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
 load(":rustc.bzl", "rustc_runfiles", "tool_paths")
+
+npm_link_all_packages(name = "node_modules")
 
 exports_files([
     "cargo.MODULE.bazel",

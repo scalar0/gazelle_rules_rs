@@ -1,61 +1,61 @@
 name: Compatibility
 on:
-  push:
-    branches: [main]
-  pull_request:
-  workflow_dispatch:
+    push:
+        branches: [main]
+    pull_request:
+    workflow_dispatch:
 permissions:
-  contents: read
+    contents: read
 concurrency:
-  group: compatibility-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    group: compatibility-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
 env:
-  DO_NOT_TRACK: '1'
-  ASPECT_WRAPPER_SKIP: '1'
-  BAZELISK_SKIP_WRAPPER: '1'
+    DO_NOT_TRACK: '1'
+    ASPECT_WRAPPER_SKIP: '1'
+    BAZELISK_SKIP_WRAPPER: '1'
 jobs:
-  test:
-    name: ${{ matrix.host }}
-    runs-on: ${{ matrix.host }}
-    timeout-minutes: 45
-    strategy:
-      fail-fast: false
-      matrix:
-        host: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, macos-15-intel]
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - uses: aspect-build/setup-aspect@ebca96eb49ef58c00d4226de8bd3a0813507dd87 # v2026.38.3
-        with:
-          bazelrc-generate: false
-          repository-cache: false
-          bazelisk-cache: true
-      - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b # v3
-        with:
-          just-version: '1.58.0'
-      - name: Install hook test dependencies
-        shell: bash
-        run: |
-          if ! command -v rg >/dev/null; then
-            if [[ "$RUNNER_OS" == "Linux" ]]; then
-              sudo apt-get update
-              sudo apt-get install --yes ripgrep
-            else
-              brew install ripgrep
-            fi
-          fi
-      - name: Check source formats
-        run: just fmt-check
-      - name: Check Bazel and shell policies
-        run: aspect lint-all //... --disk_cache="$RUNNER_TEMP/bazel-action-cache"
-      - name: Test Git hook adapters
-        run: just git-hooks-test
-      - name: Test the extension
-        run: aspect --ignore_all_rc_files test //:rules_rs_test //:rules_rs_integration_test --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= --test_output=errors
-      - name: Check consumer generation
-        working-directory: tests/consumer
-        run: aspect --ignore_all_rc_files gazelle --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= .
-      - name: Build and test the consumer
-        working-directory: tests/consumer
-        run: aspect --ignore_all_rc_files test //... //:root-probe-bench-test //crates/root-user:root-user-bench-test //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/probe:probe-bin-bench-test //crates/macros:macros-bench-test //crates/dynamic:dynamic-bench-test --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+    test:
+        name: ${{ matrix.host }}
+        runs-on: ${{ matrix.host }}
+        timeout-minutes: 45
+        strategy:
+            fail-fast: false
+            matrix:
+                host: [ubuntu-24.04, ubuntu-24.04-arm, macos-15, macos-15-intel]
+        steps:
+            - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+              with:
+                  persist-credentials: false
+            - uses: aspect-build/setup-aspect@ebca96eb49ef58c00d4226de8bd3a0813507dd87 # v2026.38.3
+              with:
+                  bazelrc-generate: false
+                  repository-cache: false
+                  bazelisk-cache: true
+            - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b # v3
+              with:
+                  just-version: '1.58.0'
+            - name: Install hook test dependencies
+              shell: bash
+              run: |
+                  if ! command -v rg >/dev/null; then
+                    if [[ "$RUNNER_OS" == "Linux" ]]; then
+                      sudo apt-get update
+                      sudo apt-get install --yes ripgrep
+                    else
+                      brew install ripgrep
+                    fi
+                  fi
+            - name: Check source formats
+              run: just fmt-check
+            - name: Check Bazel and shell policies
+              run: aspect lint-all //... --disk_cache="$RUNNER_TEMP/bazel-action-cache"
+            - name: Test Git hook adapters
+              run: just git-hooks-test
+            - name: Test the extension
+              run: aspect --ignore_all_rc_files test //:rules_rs_test //:rules_rs_integration_test --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+            - name: Check consumer generation
+              working-directory: tests/consumer
+              run: aspect --ignore_all_rc_files gazelle --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= .
+            - name: Build and test the consumer
+              working-directory: tests/consumer
+              run: aspect --ignore_all_rc_files test //... //:root-probe-bench-test //crates/root-user:root-user-bench-test //crates/probe:probe-benches/smoke //crates/probe:probe-bench-test //crates/probe:probe-bin-bench-test //crates/macros:macros-bench-test //crates/dynamic:dynamic-bench-test --disk_cache="$RUNNER_TEMP/bazel-action-cache" --remote_cache= --remote_executor= --bes_backend= --test_output=errors

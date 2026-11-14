@@ -1,10 +1,10 @@
-"""Configure source format tasks from tools/format."""
+"""Configure source format tasks from tools."""
 
 load("@aspect//format.axl", _format = "format")
 
 format_sources = _format.alias(
     defaults = {
-        "formatter_target": "//tools/format:format",
+        "formatter_target": "//tools:format",
         "scope": "changed",
         "severity": "info",
         "upload_format_diff": False,
@@ -13,7 +13,7 @@ format_sources = _format.alias(
 )
 format_check = _format.alias(
     defaults = {
-        "formatter_target": "//tools/format:format.check",
+        "formatter_target": "//tools:format.check",
         "scope": "all",
         "severity": "fail",
         "upload_format_diff": False,
