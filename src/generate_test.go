@@ -12,6 +12,97 @@ import (
 	bzl "github.com/bazelbuild/buildtools/build"
 )
 
+// HTML selection must remain independent from doctest selection.
+// Existing doctest fixtures do not protect default HTML target selection.
+func TestDocumentationTargetSelection(t *testing.T) {
+	root := t.TempDir()
+	pkg := cargoPackage{Name: "probe-package", RepoRoot: root, Manifest: filepath.Join(root, "Cargo.toml"), Features: []string{"enabled"}}
+	for _, item := range []struct {
+		name, kind   string
+		doc, doctest bool
+		required     []string
+	}{
+		{"probe_lib", "lib", true, false, nil},
+		{"probe-lib", "bin", true, false, nil},
+		{"tool", "bin", true, false, nil},
+		{"disabled", "bin", false, false, nil},
+		{"gated", "bin", true, false, []string{"missing"}},
+		{"example", "example", true, false, nil},
+		{"integration", "test", true, false, nil},
+	} {
+		pkg.Targets = append(pkg.Targets, cargoTarget{Name: item.name, Kind: []string{item.kind}, Source: filepath.Join(root, item.name+".rs"), Doc: item.doc, Doctest: item.doctest, RequiredFeatures: item.required})
+	}
+	rules, err := generate(root, "", pkg, settings{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, r := range rules {
+		if r.Kind() != "rust_doc" {
+			continue
+		}
+		names = append(names, r.Name())
+		if targetRole(r) != "documentation" || r.AttrString("crate") == "" {
+			t.Fatalf("Incomplete documentation target: %s", rendered([]*rule.Rule{r}))
+		}
+		if !slices.Equal(r.AttrStrings("crate_features"), []string{"enabled"}) {
+			t.Fatalf("Documentation lost features: %s", r.Name())
+		}
+		if r.Name() == "docs/bin/tool" && !slices.Equal(r.AttrStrings("rustdoc_flags"), []string{"--document-private-items"}) {
+			t.Fatal("Binary documentation lost private items.")
+		}
+	}
+	slices.Sort(names)
+	if !slices.Equal(names, []string{"docs/bin/tool", "docs/lib"}) {
+		t.Fatalf("Documentation targets = %v", names)
+	}
+	pkg.Targets[0].Doc, pkg.Targets[0].Doctest = false, true
+	rules, err = generate(root, "", pkg, settings{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := rendered(rules)
+	if strings.Contains(text, "name = \"docs/lib\"") || !strings.Contains(text, "name = \"tests/doc\"") {
+		t.Fatal("Documentation and doctest selection became coupled.")
+	}
+}
+
+// Documentation must follow build contexts without test-only attributes.
+// Existing context tests do not cover HTML rules or standalone rustdoc flags.
+func TestDocumentationBuildContext(t *testing.T) {
+	root := t.TempDir()
+	pkg := cargoPackage{Name: "probe", RepoRoot: root, Manifest: filepath.Join(root, "Cargo.toml"), Targets: []cargoTarget{{Name: "probe", Kind: []string{"lib"}, Source: filepath.Join(root, "src/lib.rs"), Doc: true}}}
+	rules, err := generate(root, "", pkg, settings{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkg.Contexts = &packageContexts{Platforms: []string{"x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"}, Bindings: map[string]map[string]*contextTarget{"lib": {"x86_64-unknown-linux-gnu": {Features: []string{"selected"}, Label: "//:lib"}}}, Variants: map[string]*contextTarget{}}
+	rules, err = generateContexts("", pkg, rules)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkg.StandaloneLints = []string{"--deny=rustdoc::broken_intra_doc_links"}
+	materializeStandalone(rules, pkg)
+	for _, r := range rules {
+		if r.Kind() != "rust_doc" {
+			continue
+		}
+		for _, key := range []string{"deps", "aliases", "rustc_flags", "rustc_env", "data"} {
+			if r.Attr(key) != nil {
+				t.Fatalf("Documentation has test attribute %s", key)
+			}
+		}
+		text := rendered([]*rule.Rule{r})
+		for _, want := range []string{"selected", "@platforms//:incompatible", "rustdoc::broken_intra_doc_links"} {
+			if !strings.Contains(text, want) {
+				t.Fatalf("Documentation lost %s: %s", want, text)
+			}
+		}
+		return
+	}
+	t.Fatal("The build context removed documentation.")
+}
+
 // The target contract covers public outputs that old naming tests did not cover.
 func TestPublicTargetContract(t *testing.T) {
 	root := t.TempDir()

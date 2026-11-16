@@ -24,6 +24,7 @@ The consumer selects the Rust compiler through its registered Bazel toolchain.
 | Examples             | Binaries or requested library output types                            |
 | Benchmarks           | Manual `rust_test` targets with `--bench`                             |
 | Doctests             | `rust_doc_test` from the public rules_rust API                        |
+| HTML documentation   | `rust_doc` targets named `docs/lib` and `docs/bin/<name>`             |
 | Cargo unit graphs    | Context-specific local dependencies and features                      |
 | Public crate helpers | External dependencies, aliases, crate names, editions, and lints      |
 | Metadata handlers    | Additional rules, resource inputs, and environment values             |

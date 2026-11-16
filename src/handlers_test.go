@@ -73,7 +73,9 @@ func TestMetadataInputRelationships(t *testing.T) {
 	doc := newRule("rust_doc_test", "tests/doc")
 	doc.SetPrivateAttr("cargo_input_target", "lib")
 	unrelated := newRule("rust_binary", "lib-cargo-unrelated")
-	rules := []*rule.Rule{base, variant, unit, doc, unrelated}
+	html := newRule("rust_doc", "docs/lib")
+	html.SetPrivateAttr("cargo_input_target", "lib")
+	rules := []*rule.Rule{base, variant, unit, doc, html, unrelated}
 	_, err := applyContributions(rules, []Contribution{{Inputs: []TargetInputs{{Target: "lib", CompileData: []string{":resource"}}}}})
 	if err != nil {
 		t.Fatal(err)
@@ -83,7 +85,7 @@ func TestMetadataInputRelationships(t *testing.T) {
 			t.Fatalf("Target %s did not get the declared input: %v", r.Name(), got)
 		}
 	}
-	for _, r := range []*rule.Rule{doc, unrelated} {
+	for _, r := range []*rule.Rule{doc, html, unrelated} {
 		if r.Attr("compile_data") != nil {
 			t.Fatalf("Target %s got unrelated compiler inputs", r.Name())
 		}

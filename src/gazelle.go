@@ -140,7 +140,7 @@ func kindMap() map[string]rule.KindInfo {
 		attrs[key] = true
 	}
 	kinds := map[string]rule.KindInfo{}
-	for _, kind := range []string{"rust_library", "rust_proc_macro", "rust_binary", "rust_test", "cargo_build_script", "test_suite", "alias", "rust_shared_library", "rust_static_library", "rust_dylib_library", "rust_doc_test"} {
+	for _, kind := range []string{"rust_library", "rust_proc_macro", "rust_binary", "rust_test", "cargo_build_script", "test_suite", "alias", "rust_shared_library", "rust_static_library", "rust_dylib_library", "rust_doc_test", "rust_doc"} {
 		kinds[kind] = rule.KindInfo{MergeableAttrs: attrs, NonEmptyAttrs: map[string]bool{"srcs": true, "crate": true, "tests": true, "actual": true}}
 	}
 	return kinds
@@ -152,7 +152,7 @@ func (e *extension) Kinds() []rule.KindInfo {
 		info.Name = name
 		if _, core := kindMap()[name]; core && name != "alias" && name != "test_suite" {
 			info.LoadedFrom = label.New(e.rulesRepository(), "rs", name+".bzl")
-			if name == "rust_doc_test" || name == "rust_dylib_library" {
+			if name == "rust_doc_test" || name == "rust_doc" || name == "rust_dylib_library" {
 				info.LoadedFrom = label.New("rules_rust", "rust", "defs.bzl")
 			}
 		}

@@ -61,6 +61,8 @@ func targetDescriptor(pkg cargoPackage, target cargoTarget, mode string) (Target
 		return info, fmt.Errorf("the Cargo target has unsupported kind %s", info.Kind)
 	}
 	switch mode {
+	case "doc":
+		info.BazelTarget, info.Role = "docs/"+info.BazelTarget, "documentation"
 	case "doctest":
 		info.BazelTarget, info.Role = "tests/doc", "doc-test"
 	case "test", "bench":
@@ -95,6 +97,26 @@ func targetEnabled(pkg cargoPackage, target cargoTarget) bool {
 	return true
 }
 
+// Documentation follows Cargo's default library and binary selection.
+func documentationEnabled(pkg cargoPackage, target cargoTarget) bool {
+	if !target.Doc || !targetEnabled(pkg, target) {
+		return false
+	}
+	switch targetKind(target) {
+	case "lib", "proc-macro":
+		return true
+	case "bin":
+		for _, library := range pkg.Targets {
+			if (targetKind(library) == "lib" || targetKind(library) == "proc-macro") && strings.ReplaceAll(library.Name, "-", "_") == strings.ReplaceAll(target.Name, "-", "_") {
+				return false
+			}
+		}
+		return true
+	default:
+		return false
+	}
+}
+
 // packageTargetInfos lists public targets and rejects ambiguous Bazel labels.
 func packageTargetInfos(pkg cargoPackage) ([]TargetInfo, error) {
 	var result []TargetInfo
@@ -127,7 +149,7 @@ func packageTargetInfos(pkg cargoPackage) ([]TargetInfo, error) {
 		for _, mode := range []struct {
 			name string
 			use  bool
-		}{{"test", target.Test}, {"bench", target.Bench && info.Kind != "example"}, {"doctest", target.Doctest && info.Role == "library"}} {
+		}{{"test", target.Test}, {"bench", target.Bench && info.Kind != "example"}, {"doctest", target.Doctest && info.Role == "library"}, {"doc", documentationEnabled(pkg, target)}} {
 			if mode.use {
 				derived, err := targetDescriptor(pkg, target, mode.name)
 				if err != nil {

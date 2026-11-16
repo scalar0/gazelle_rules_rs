@@ -857,6 +857,18 @@ func generate(root, rel string, pkg cargoPackage, opts settings) ([]*rule.Rule, 
 		default:
 			return nil, fmt.Errorf("the Cargo target has unsupported kind %s", kind)
 		}
+		if documentationEnabled(pkg, target) {
+			docInfo, _ := targetDescriptor(pkg, target, "doc")
+			doc := newRule("rust_doc", docInfo.BazelTarget)
+			doc.SetPrivateAttr("cargo_template", info.BazelTarget)
+			doc.SetPrivateAttr("cargo_input_target", info.BazelTarget)
+			setAttr(doc, "crate", ":"+info.BazelTarget)
+			setAttr(doc, "crate_features", rule.ExprFromValue(pkg.Features))
+			if kind == "bin" {
+				setAttr(doc, "rustdoc_flags", []string{"--document-private-items"})
+			}
+			rules = append(rules, doc)
+		}
 	}
 	if pkg.Contexts == nil && len(binaries) != 0 {
 		for _, r := range rules {

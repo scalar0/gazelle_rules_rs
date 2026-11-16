@@ -465,6 +465,24 @@ func generateContexts(rel string, pkg cargoPackage, templates []*rule.Rule) ([]*
 			continue
 		}
 		r := cloneContextRule(template, template.Name())
+		if r.Kind() == "rust_doc" {
+			features, compatible := map[string][]string{}, map[string][]string{}
+			for _, platform := range pkg.Contexts.Platforms {
+				if context := bindings[platform]; context != nil {
+					features[platform] = context.Features
+					compatible[platform] = nil
+				} else {
+					features[platform] = nil
+					compatible[platform] = []string{"@platforms//:incompatible"}
+				}
+			}
+			setAttr(r, "crate_features", platformValues(features))
+			if common, constant := uniformValues(compatible); !constant || len(common) != 0 {
+				setAttr(r, "target_compatible_with", platformValues(compatible))
+			}
+			result = append(result, r)
+			continue
+		}
 		if crate := r.AttrString("crate"); crate != "" && r.Kind() != "rust_doc_test" {
 			base := byName[strings.TrimPrefix(crate, ":")]
 			if base == nil {

@@ -148,11 +148,15 @@ func materializeStandalone(rules []*rule.Rule, pkg cargoPackage) {
 			}))
 		}
 		if len(pkg.StandaloneLints) != 0 && strings.HasPrefix(r.Kind(), "rust_") && r.Kind() != "rust_doc_test" {
+			attribute := "rustc_flags"
+			if r.Kind() == "rust_doc" {
+				attribute = "rustdoc_flags"
+			}
 			flags := rule.ExprFromValue(pkg.StandaloneLints)
-			if old := r.Attr("rustc_flags"); old != nil {
+			if old := r.Attr(attribute); old != nil {
 				flags = &bzl.BinaryExpr{X: old, Op: "+", Y: flags}
 			}
-			setAttr(r, "rustc_flags", flags)
+			setAttr(r, attribute, flags)
 		}
 	}
 }

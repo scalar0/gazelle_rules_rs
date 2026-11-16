@@ -197,7 +197,7 @@ func applyContributions(rules []*rule.Rule, additions []Contribution) ([]*rule.R
 				if r.Kind() == "alias" {
 					continue
 				}
-				if r.Kind() == "rust_doc_test" || r.Kind() == "test_suite" {
+				if r.Kind() == "rust_doc_test" || r.Kind() == "rust_doc" || r.Kind() == "test_suite" {
 					if r.Name() == input.Target {
 						return nil, fmt.Errorf("target %s does not accept compiler inputs", input.Target)
 					}
