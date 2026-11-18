@@ -68,7 +68,7 @@ bazel_label = ":input.txt"
 			t.Fatal(err)
 		}
 	}
-	run := func(success bool, override, tool string, args ...string) string {
+	run := func(success bool, override, tool string, args ...string) (stdout, stderr string) {
 		t.Helper()
 		cmd := exec.CommandContext(t.Context(), tool, args...)
 		cmd.Dir = root
@@ -76,14 +76,16 @@ bazel_label = ":input.txt"
 		if override != "" {
 			cmd.Env = append(cmd.Env, "PROBE_VENDOR_INPUT="+override)
 		}
-		output, err := cmd.CombinedOutput()
+		var diagnostics strings.Builder
+		cmd.Stderr = &diagnostics
+		output, err := cmd.Output()
 		if (err == nil) != success {
-			t.Fatalf("Unexpected Cargo fixture result: %v\n%s", err, output)
+			t.Fatalf("Unexpected Cargo fixture result: %v\n%s%s", err, output, diagnostics.String())
 		}
-		return string(output)
+		return string(output), diagnostics.String()
 	}
 	run(true, "", cargo, "generate-lockfile", "--offline")
-	exported := run(true, "", vendorConfig, "--root", root, "--print-build-inputs")
+	exported, _ := run(true, "", vendorConfig, "--root", root, "--print-build-inputs")
 	var bindings map[string]map[string]string
 	if err := json.Unmarshal([]byte(exported), &bindings); err != nil {
 		t.Fatal(err)
@@ -100,9 +102,9 @@ bazel_label = ":input.txt"
 	if err := os.WriteFile(alternate, []byte{0xff}, 0o644); err != nil {
 		t.Fatal(err)
 	}
-	output := run(false, alternate, cargo, "check", "--locked", "--offline")
-	if !strings.Contains(output, "utf-8") {
-		t.Fatalf("Cargo did not select the explicit environment override: %s", output)
+	_, diagnostic := run(false, alternate, cargo, "check", "--locked", "--offline")
+	if !strings.Contains(diagnostic, "utf-8") {
+		t.Fatalf("Cargo did not select the explicit environment override: %s", diagnostic)
 	}
 	run(true, "", cargo, "check", "--locked", "--offline")
 }

@@ -1,7 +1,7 @@
+load("@aspect_rules_lint//format:defs.bzl", "format_multirun")
 load("@npm//:defs.bzl", "npm_link_all_packages")
 load("@npm//tools:@taplo/cli/package_json.bzl", taplo_bin = "bin")
 load("@npm//tools:prettier/package_json.bzl", prettier_bin = "bin")
-load("@rules_lint//format:defs.bzl", "format_multirun")
 
 npm_link_all_packages(name = "node_modules")
 
@@ -21,13 +21,13 @@ taplo_bin.taplo_binary(
 format_multirun(
     name = "format",
     css = ":prettier",
-    go = "@rules_lint//format:gofumpt",
+    go = "@aspect_rules_lint//format:gofumpt",
     html = ":prettier",
     javascript = ":prettier",
     markdown = ":prettier",
     markdown_fix_args = ["--write"],
     rust = "@rules_rust//tools/upstream_wrapper:rustfmt",
-    shell = "@rules_lint//format:shfmt",
+    shell = "@aspect_rules_lint//format:shfmt",
     starlark = "@buildifier_prebuilt//:buildifier",
     starlark_check_args = [
         "-mode=check",

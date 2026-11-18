@@ -1,0 +1,12 @@
+# Load the settings from `aspect setup bazelrc`.
+try-import %workspace%/.aspect/bazelrc
+# Disable telemetry from Aspect tools in repository rules.
+common --repo_env=ASPECT_TOOLS_TELEMETRY=-all
+
+# Use Aspect Cloud by default for direct Bazel builds and tests.
+build --config=aspect-cloud
+# Use the remote cache without a separate disk cache.
+build --disk_cache=
+# Download remote outputs only when local actions need them.
+# Use --remote_download_outputs=toplevel when a local tool needs the requested outputs.
+build --remote_download_outputs=minimal

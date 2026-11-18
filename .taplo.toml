@@ -35,4 +35,4 @@ include = [
 ]
 
 [rule.schema]
-path = ".cargo/schema.json"
+url = "https://www.schemastore.org/cargo.json"

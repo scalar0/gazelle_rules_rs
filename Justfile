@@ -4,14 +4,28 @@ export DO_NOT_TRACK := "1"
 default:
     just --list
 
-# Check Go packages and the configured Go lint aspect.
-# Run tests without parent workspace configuration or remote services.
+# Run the Go unit and integration tests.
 test:
-    aspect --ignore_all_rc_files test \
-    //src/... \
-    //tools/lint:golangci_clean_test //tools/lint:golangci_source_test \
-    --remote_cache= --remote_executor= --bes_backend= \
-    --test_output=errors
+    aspect test //src/... --test_output=errors
+
+# Build the standalone targets.
+build:
+    aspect build //...
+
+# Write .aspect/generated/coverage.lcov after the local Go tests pass.
+# Include the fixture runner so it can write coverage metadata.
+coverage:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    report_dir=.aspect/generated
+    mkdir -p "$report_dir"
+    scratch=$(mktemp -d "$report_dir/coverage.XXXXXX")
+    trap 'rm -rf -- "$scratch"' EXIT
+    aspect test --remote=none --coverage=true \
+        --coverage-report="$scratch/report.lcov" \
+        --instrumentation_filter='^//src[/:],^//:integration_runner$' //src/...
+    mv -f -- "$scratch/report.lcov" "$report_dir/coverage.lcov"
+    printf 'Wrote %s\n' "$report_dir/coverage.lcov"
 
 # Stage shared fixture inputs so both suites test the same Cargo source files.
 # Generate rules before checking their stability and compiling every consumer target.
@@ -20,27 +34,45 @@ consumer-test:
     set -euo pipefail
     fixture_root="$(mktemp -d "${TMPDIR:-/tmp}/gazelle-rust-consumer.XXXXXX")"
     trap 'rm -rf -- "$fixture_root"' EXIT
-    aspect --ignore_all_rc_files run //:consumer-test \
-        --remote_cache= --remote_executor= --bes_backend= \
+    aspect run //:consumer-test \
         -- --destination="$fixture_root" --extension-root="{{ justfile_directory() }}"
     for fixture in owned upstream; do
         (
             cd "$fixture_root/$fixture"
             # Consumers do not inherit development dependencies from the extension.
             bazel --ignore_all_rc_files query '@gazelle_rules_rs//:all'
-            aspect --ignore_all_rc_files run //:gazelle \
-                --remote_cache= --remote_executor= --bes_backend= -- -mode=fix .
-            aspect --ignore_all_rc_files run //:gazelle \
-                --remote_cache= --remote_executor= --bes_backend= -- -mode=diff .
-            aspect --ignore_all_rc_files test //... //:benchmarks \
-                --remote_cache= --remote_executor= --bes_backend= --test_output=errors
+            aspect --ignore_all_rc_files run --remote=none //:gazelle -- -mode=fix .
+            aspect --ignore_all_rc_files run --remote=none //:gazelle -- -mode=diff .
+            aspect --ignore_all_rc_files test --remote=none //... //:benchmarks --test_output=errors
         )
     done
 
 # Check Go BUILD rules with the official Go extension after source or dependency changes.
 go-check:
-    aspect --ignore_all_rc_files run //:gazelle_go \
-    --remote_cache= --remote_executor= --bes_backend=
+    aspect run //:gazelle_go
+
+# Check the Bzlmod lockfile without changing it.
+bazel-mod-lock-check:
+    aspect mod -- deps
+
+# Update the lockfile after a Bazel dependency changes.
+bazel-mod-lock-update:
+    aspect mod -- --lockfile_mode=update deps
+
+# Validate Git source files with the same Taplo tool as the formatter.
+toml-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    git ls-files --cached --others --exclude-standard -z -- '*.toml' \
+    | xargs -0 aspect run --run-in=bazel-root //tools:taplo -- lint --config=.taplo.toml
+
+# Update the formatter lockfile with the pinned pnpm tool.
+# Apply the repository's YAML format after pnpm writes the lockfile.
+[env("BAZEL_BINDIR", ".")]
+npm-lock-update:
+    aspect run --run-in=bazel-root @pnpm//:pnpm -- \
+    --dir tools install --lockfile-only --ignore-scripts
+    aspect run --run-in=bazel-root //tools:prettier -- --write tools/pnpm-lock.yaml
 
 # Format source files through the same Aspect task used by Git hooks.
 fmt:
@@ -52,12 +84,19 @@ fmt-check:
     aspect format-check
     just --fmt --check --unstable
 
-# Check Bazel, shell, and Go policies through the same tools used by CI.
+# Check Bazel files across the checkout, then lint Bazel and shell targets.
 lint:
+    aspect run //tools/lint:buildifier_check
     aspect lint-all //...
 
-# Check generation, format, lint, tests, and hook behavior before a push.
-check-push: go-check fmt-check lint test consumer-test git-hooks-test
+# Check source formats, the Bzlmod lockfile, TOML, and Go BUILD files.
+check: fmt-check bazel-mod-lock-check toml-check go-check
+
+# Run all development checks in the same order as CI.
+check-full: check lint build test consumer-test git-hooks-test
+
+# Run full validation before a push.
+check-push: check-full
 
 # Generate adapters from root recipes tagged with group('hooks'). Recipe names become Git hook names.
 # Git stores adapters in its shared hooks directory, normally .git/hooks.

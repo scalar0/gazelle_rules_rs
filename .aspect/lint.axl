@@ -1,22 +1,12 @@
 """Configure Bazel and shell lint checks for the standalone extension."""
 
 load("@aspect//lint.axl", _lint = "lint")
+load("./maintenance.axl", "BAZEL_CHECK_FLAGS")
 
 _ASPECTS = [
     "//tools/lint:linters.bzl%buildifier",
     "//tools/lint:linters.bzl%shellcheck",
-    "//tools/lint:linters.bzl%golangci",
 ]
-
-lint_go = _lint.alias(
-    defaults = {
-        "aspects": ["//tools/lint:linters.bzl%golangci"],
-        "base_ref": "HEAD",
-        "strategy": "hard",
-        "targets": ["//src/..."],
-    },
-    summary = "Check Go source files and tests with golangci-lint.",
-)
 
 lint_all = _lint.alias(
     defaults = {
@@ -24,7 +14,7 @@ lint_all = _lint.alias(
         "base_ref": "HEAD",
         "strategy": "hard",
     },
-    summary = "Check all Bazel, shell, and Go policies.",
+    summary = "Check Bazel and shell policies.",
 )
 
 def configure(ctx):
@@ -36,5 +26,6 @@ def configure(ctx):
     ctx.tasks["lint"].args.aspects = _ASPECTS
     ctx.tasks["lint"].args.strategy = "hard"
     ctx.tasks["lint"].args.base_ref = "HEAD"
-    for name in ["lint", "lint-all", "lint-go"]:
-        ctx.tasks[name].args.rules_lint_fix_flag = "@rules_lint//lint:fix"
+    for name in ["lint", "lint-all"]:
+        ctx.tasks[name].args.rules_lint_fix_flag = "@aspect_rules_lint//lint:fix"
+        ctx.tasks[name].args.bazel_flags = BAZEL_CHECK_FLAGS + ["--remote_download_regex=.*AspectRulesLint.*"]

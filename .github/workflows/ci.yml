@@ -18,6 +18,8 @@ jobs:
         name: ${{ matrix.host }}
         runs-on: ${{ matrix.host }}
         timeout-minutes: 45
+        env:
+            GAZELLE_ASPECT_REMOTE: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'cache' || 'none' }}
         strategy:
             fail-fast: false
             matrix:
@@ -28,6 +30,7 @@ jobs:
                   persist-credentials: false
             - uses: aspect-build/setup-aspect@ebca96eb49ef58c00d4226de8bd3a0813507dd87 # v2026.38.3
               with:
+                  aspect-api-token: ${{ env.GAZELLE_ASPECT_REMOTE == 'cache' && secrets.ASPECT_API_TOKEN || '' }}
                   bazelrc-generate: false
                   repository-cache: false
                   bazelisk-cache: true
@@ -45,15 +48,5 @@ jobs:
                       brew install ripgrep
                     fi
                   fi
-            - name: Check Go BUILD generation
-              run: just go-check
-            - name: Check source formats
-              run: just fmt-check
-            - name: Check Bazel, shell, and Go policies
-              run: just lint
-            - name: Test Git hook adapters
-              run: just git-hooks-test
-            - name: Test the extension
-              run: just test
-            - name: Generate, build, and test shared consumers
-              run: just consumer-test
+            - name: Run full validation
+              run: just check-full

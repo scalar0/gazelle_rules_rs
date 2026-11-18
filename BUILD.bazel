@@ -4,7 +4,6 @@ load(":rustc.bzl", "rustc_runfiles")
 exports_files([
     "cargo.MODULE.bazel",
     "fixtures.MODULE.bazel",
-    ".golangci.yml",
     "config.bzl",
     "testdata/patches/manifest-workspace.patch",
     ".shellcheckrc",

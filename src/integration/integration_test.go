@@ -607,6 +607,9 @@ func TestUpstreamGeneration(t *testing.T) {
 	t.Setenv("RUSTC", rustc)
 	t.Setenv("CARGO_NET_OFFLINE", "true")
 	t.Setenv("CARGO_HOME", filepath.Join(t.TempDir(), "cargo"))
+	if os.Getenv("COVERAGE_DIR") != "" {
+		t.Setenv("GOCOVERDIR", t.TempDir())
+	}
 	for _, name := range []string{"upstream", "handwritten_conflict"} {
 		root := t.TempDir()
 		if err := testfixture.Stage(*upstreamFixturePath, root); err != nil {

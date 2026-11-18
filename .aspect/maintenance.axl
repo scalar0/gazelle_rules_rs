@@ -1,8 +1,15 @@
 """Expose generic Bazel maintenance primitives through Aspect."""
 
-def _bazel_task(verb):
+BAZEL_STARTUP_FLAGS = ["--ignore_all_rc_files"]
+BAZEL_CHECK_FLAGS = [
+    "--lockfile_mode=error",
+    "--experimental_collect_system_network_usage=false",
+    "--repo_env=ASPECT_TOOLS_TELEMETRY=-all",
+]
+
+def _bazel_task(verb, flags = []):
     def _impl(ctx):
-        command = list(ctx.args.bazel_startup_flags) + [verb] + list(ctx.args.arguments)
+        command = list(ctx.args.bazel_startup_flags) + [verb] + flags + list(ctx.args.arguments)
         return ctx.std.process.command("bazel").args(command).current_dir(
             ctx.std.env.bazel_root_dir(),
         ).env("ASPECT_WRAPPER_SKIP", "1").env("BAZELISK_SKIP_WRAPPER", "1").spawn().wait().code
@@ -15,11 +22,12 @@ def _bazel_task(verb):
             "bazel_startup_flags": args.string_list(
                 long = "bazel-startup-flag",
                 description = "Bazel startup flag. Repeat for each flag. Use --bazel-startup-flag=VALUE.",
+                default = BAZEL_STARTUP_FLAGS,
             ),
         },
     )
 
 clean = _bazel_task("clean")
-mod = _bazel_task("mod")
-fetch = _bazel_task("fetch")
-vendor = _bazel_task("vendor")
+mod = _bazel_task("mod", BAZEL_CHECK_FLAGS)
+fetch = _bazel_task("fetch", BAZEL_CHECK_FLAGS)
+vendor = _bazel_task("vendor", BAZEL_CHECK_FLAGS)

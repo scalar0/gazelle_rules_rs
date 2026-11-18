@@ -316,15 +316,17 @@ A nightly Cargo binary alone does not enable unstable compiler features.
 ## Development and provenance
 
 The [Justfile](Justfile) defines development commands.
-The [CI workflow](.github/workflows/ci.yml) uses Aspect for standalone tests, consumer generation checks, and consumer tests on four hosts.
+The [CI workflow](.github/workflows/ci.yml) runs full validation on Linux and macOS for x86-64 and ARM64.
 The [Aspect version file](.aspect/version.axl) pins the CLI for local and CI use.
-The extension owns the copied format, lint, maintenance, and Git hook configuration.
-CI also checks source formats, Bazel and shell policies, and Git hook behavior.
+Run `aspect auth login` to use the shared cache and build reports during local development.
+The [workspace Bazel configuration](.bazelrc) enables Aspect Cloud for direct Bazel builds and tests.
+Set `GAZELLE_ASPECT_REMOTE=none` to use local execution for Aspect tasks.
+Main branch CI uses the repository's `ASPECT_API_TOKEN` secret.
+Pull request jobs and staged consumer workspaces run without Aspect Cloud.
 Go code uses normal packages under `src/` and standard test filenames.
 The official Gazelle Go extension maintains Go BUILD rules.
 An internal Cargo adapter owns declared tool resolution and subprocess execution.
-Go lint uses the upstream rules_lint aspect, a pinned golangci-lint release, and the selected Bazel Go SDK.
-The module pins rules_lint source until a stable release includes Go lint support.
+The module uses the registry release of `aspect_rules_lint` for Bazel and shell checks.
 The formatter npm workspace belongs to `tools/` and does not supply consumer dependencies.
 
 Go integration tests and Rust consumer tests share the same fixture inputs.

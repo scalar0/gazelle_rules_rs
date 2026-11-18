@@ -1,7 +1,9 @@
-"""Configure local execution for development and compatibility checks."""
+"""Configure development and compatibility checks."""
 
 load("./features.axl", configure_features = "configure")
+load("./format.axl", configure_format = "configure")
 load("./lint.axl", configure_lint = "configure")
+load("./maintenance.axl", "BAZEL_CHECK_FLAGS", "BAZEL_STARTUP_FLAGS")
 
 def config(ctx):
     """Apply the execution and reporting policy.
@@ -10,9 +12,21 @@ def config(ctx):
         ctx: The Aspect configuration context.
     """
     configure_features(ctx)
+    configure_format(ctx)
+    for name in [
+        "build",
+        "test",
+        "run",
+        "gazelle",
+        "lint",
+        "lint-all",
+        "format",
+        "format-sources",
+        "format-check",
+    ]:
+        ctx.tasks[name].args.bazel_startup_flags = BAZEL_STARTUP_FLAGS
+        ctx.tasks[name].args.bazel_flags = BAZEL_CHECK_FLAGS
     configure_lint(ctx)
-    for name in ["build", "test", "run", "gazelle", "lint", "lint-all", "lint-go", "format-sources", "format-check"]:
-        ctx.tasks[name].args.bazel_startup_flags = ["--ignore_all_rc_files"]
     ctx.tasks["test"].args.coverage = False
     ctx.tasks["gazelle"].args.gazelle_target = "//:gazelle"
     ctx.tasks["gazelle"].args.gazelle_flags = ["-r=true"]

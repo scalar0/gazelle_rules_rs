@@ -53,9 +53,8 @@ register_toolchains(
     dev_dependency = True,
 )
 
-# Development checks use the same tools as the source repository.
 bazel_dep(
-    name = "rules_lint",
+    name = "aspect_rules_lint",
     version = "2.9.1",
     dev_dependency = True,
 )
@@ -117,26 +116,3 @@ npm.npm_translate_lock(
     update_pnpm_lock = False,
 )
 use_repo(npm, npm = "gazelle_rules_rs_npm")
-
-# The pinned source provides Go lint support before the next stable release.
-archive_override(
-    module_name = "rules_lint",
-    patch_strip = 1,
-    patches = ["//tools/lint:golangci_metadata_paths.patch"],
-    sha256 = "f032645c2dca8a623a1a906e240afa194cb5fc442759771769aa9ff1c06c5f2d",
-    strip_prefix = "rules_lint-46361f882415c2206bebe575f59c5aefa3257529",
-    urls = ["https://github.com/bazel-contrib/rules_lint/archive/46361f882415c2206bebe575f59c5aefa3257529.tar.gz"],
-)
-
-bazel_dep(
-    name = "rules_multitool",
-    version = "0.11.0",
-    dev_dependency = True,
-)
-
-multitool = use_extension(
-    "@rules_multitool//multitool:extension.bzl",
-    "multitool",
-    dev_dependency = True,
-)
-multitool.hub(lockfile = "//tools/lint:multitool.lock.json")

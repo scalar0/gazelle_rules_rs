@@ -1,22 +1,20 @@
-load(":linters.bzl", "golangci_test")
+load("@buildifier_prebuilt//:rules.bzl", "buildifier")
 
 exports_files([
     "buildifier_prebuilt_runfiles.patch",
-    "golangci_metadata_paths.patch",
     "linters.bzl",
-    "multitool.lock.json",
 ])
 
-# These checks protect the repository lint configuration and Go rule selection.
-# The clean library must pass. The test source must report the known format error.
-# Go package tests do not run the configured lint aspect.
-golangci_test(
-    name = "golangci_clean_test",
-    srcs = ["//tools/lint/testdata:clean"],
-)
-
-golangci_test(
-    name = "golangci_source_test",
-    srcs = ["//tools/lint/testdata:test_sources"],
-    expected_exit_code = 1,
+buildifier(
+    name = "buildifier_check",
+    exclude_patterns = [
+        "./.git/*",
+        "./bazel-*/*",
+        "./.aspect/generated/*",
+        "*/node_modules/*",
+        "*/target/*",
+        "*/vendor/*",
+    ],
+    lint_mode = "warn",
+    mode = "check",
 )

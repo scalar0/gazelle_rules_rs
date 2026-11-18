@@ -2,9 +2,11 @@
 
 load("@aspect//format.axl", _format = "format")
 
+_FORMATTER = "//tools:format"
+
 format_sources = _format.alias(
     defaults = {
-        "formatter_target": "//tools:format",
+        "formatter_target": _FORMATTER,
         "scope": "changed",
         "severity": "info",
         "upload_format_diff": False,
@@ -13,10 +15,19 @@ format_sources = _format.alias(
 )
 format_check = _format.alias(
     defaults = {
-        "formatter_target": "//tools:format.check",
+        "formatter_target": _FORMATTER + ".check",
         "scope": "all",
         "severity": "fail",
         "upload_format_diff": False,
     },
     summary = "Check source formats without changing files.",
 )
+
+def configure(ctx):
+    """Set the formatter target for the built-in format task.
+
+    Args:
+        ctx: The Aspect configuration context.
+    """
+    ctx.tasks["format"].args.formatter_target = _FORMATTER
+    ctx.tasks["format"].args.upload_format_diff = False

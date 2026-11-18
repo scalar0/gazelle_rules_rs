@@ -1,4 +1,4 @@
-"""Run without remote services, CI comments, or telemetry."""
+"""Use Aspect Cloud for cache and build reports."""
 
 load("@aspect//feature/artifacts.axl", "ArtifactUpload")
 load("@aspect//feature/buildkite_annotations.axl", "BuildkiteAnnotations")
@@ -19,7 +19,7 @@ def configure(ctx):
     Args:
         ctx: The Aspect configuration context.
     """
-    ctx.features[Deployment].args.remote = "none"
+    ctx.features[Deployment].args.remote = ctx.std.env.var("GAZELLE_ASPECT_REMOTE") or "cache"
     for feature in [
         ArtifactUpload,
         BuildkiteAnnotations,
