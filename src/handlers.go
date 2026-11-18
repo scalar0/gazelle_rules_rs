@@ -164,7 +164,7 @@ func (e *extension) metadataContributions(ctx context.Context, rel string, pkg c
 			if r.Name() == "" {
 				return nil, fmt.Errorf("handler %s returned an unnamed rule", registered.spec.Namespace)
 			}
-			if !slices.Contains(r.Comments(), marker) {
+			if !ownsRule(r) {
 				r.AddComment(marker)
 			}
 		}

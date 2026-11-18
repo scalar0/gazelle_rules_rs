@@ -3,8 +3,10 @@ package rulesrs
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -93,21 +95,34 @@ func renderVendorConfig(original []byte, inputs map[string]buildInput) ([]byte, 
 	return result, nil
 }
 
-// SyncVendorConfig checks or updates Cargo vendor defaults from workspace metadata.
-func SyncVendorConfig(root string, write bool) error {
+func resolvedVendorInputs(root string) (map[string]buildInput, error) {
 	root, err := filepath.Abs(root)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	tool, err := cargo.PinnedCargo()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	data, err := loadCargoMetadata(context.Background(), root, root, tool, true)
 	if err != nil {
+		return nil, err
+	}
+	return vendorInputs(data)
+}
+
+// PrintBuildInputs writes the resolved workspace input bindings as JSON.
+func PrintBuildInputs(root string, output io.Writer) error {
+	inputs, err := resolvedVendorInputs(root)
+	if err != nil {
 		return err
 	}
-	inputs, err := vendorInputs(data)
+	return json.NewEncoder(output).Encode(inputs)
+}
+
+// SyncVendorConfig checks or updates Cargo vendor defaults from workspace metadata.
+func SyncVendorConfig(root string, write bool) error {
+	inputs, err := resolvedVendorInputs(root)
 	if err != nil {
 		return err
 	}

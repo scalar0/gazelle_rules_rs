@@ -89,7 +89,7 @@ The extension does not parse consumer MODULE syntax.
 
 ## Rule ownership
 
-Each generated rule has a marker comment.
+Each generated rule has the marker `#CODEGEN:gazelle_rules_rs`.
 The extension updates or removes rules with that marker.
 It rejects name conflicts with handwritten rules.
 Gazelle preserves `# keep` attributes and rules.
@@ -184,6 +184,9 @@ Build inputs pair a repository-relative Cargo path with a Bazel file label.
 Generated build scripts receive those labels as data and environment values through `execpath`.
 The public `@gazelle_rules_rs//:vendor-config` command maintains matching Cargo environment defaults.
 It preserves configuration outside its marked block.
+Use `--print-build-inputs` to print the resolved workspace bindings as JSON.
+Each environment variable maps to its repository-relative Cargo path and resolved Bazel label.
+This mode only reads workspace metadata.
 Build scripts own resource parsing and validation.
 
 ## Manifest access

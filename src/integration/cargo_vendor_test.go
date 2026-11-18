@@ -1,6 +1,8 @@
 package rulesrs_test
 
 import (
+	"encoding/json"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -52,7 +54,7 @@ edition = "2024"
 
 [package.metadata.rules_rs.build_inputs.PROBE_VENDOR_INPUT]
 cargo_path = "input.txt"
-bazel_label = "//:input.txt"
+bazel_label = ":input.txt"
 `,
 		".cargo/config.toml": "[env]\n# BEGIN GENERATED rules_rs vendor inputs\n# END GENERATED rules_rs vendor inputs\n",
 		"src/lib.rs":         `pub const CONTENT: &str = include_str!(env!("PROBE_VENDOR_INPUT"));`,
@@ -81,6 +83,17 @@ bazel_label = "//:input.txt"
 		return string(output)
 	}
 	run(true, "", cargo, "generate-lockfile", "--offline")
+	exported := run(true, "", vendorConfig, "--root", root, "--print-build-inputs")
+	var bindings map[string]map[string]string
+	if err := json.Unmarshal([]byte(exported), &bindings); err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{"cargo_path": "input.txt", "bazel_label": "//:input.txt"}
+	if len(bindings) != 1 || !maps.Equal(bindings["PROBE_VENDOR_INPUT"], want) {
+		t.Fatalf("Unexpected resolved input bindings: %s", exported)
+	}
+	run(false, "", vendorConfig, "--root", root, "--print-build-inputs", "--write")
+	run(false, "", vendorConfig, "--root", root, "--check")
 	run(true, "", vendorConfig, "--root", root, "--write")
 	run(true, "", cargo, "check", "--locked", "--offline")
 	alternate := filepath.Join(root, "alternate.txt")
